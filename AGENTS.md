@@ -9,7 +9,7 @@
 
 ## Product
 
-**TrustBuild** is a contractor search + vetting web app — think CSLB + BuildZoom
+**Plumbd** is a contractor search + vetting web app — think CSLB + BuildZoom
 + Yelp's local-search UX, minus reviews and auth. It queries a Supabase table
 of licensed contractors and renders trust signals (active/expired, workers'
 comp, bond, disciplinary history) at a glance.

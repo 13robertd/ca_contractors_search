@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# TrustBuild — production deploy to Vercel
+# Plumbd — production deploy to Vercel
 #
 # Usage:
 #   ./scripts/deploy.sh             # deploy a Preview (feature branch style)

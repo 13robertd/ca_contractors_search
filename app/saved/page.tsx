@@ -66,28 +66,30 @@ export default function SavedPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-900">Saved contractors</h1>
-        <p className="text-sm text-slate-600 mt-1">
+        <h1 className="text-2xl font-semibold tracking-tightish text-ink">Saved contractors</h1>
+        <p className="text-sm text-ink-muted mt-1">
           Your shortlist lives in this browser. No account needed.
         </p>
       </header>
 
       {loading ? (
-        <div className="card p-10 text-center text-sm text-slate-500">
+        <div className="card p-10 text-center text-sm text-ink-muted">
           Loading your saved contractors…
         </div>
       ) : error ? (
-        <div className="card p-6 border-rose-200 bg-rose-50 text-sm text-rose-800">
+        <div className="card p-6 border-brand-200 bg-brand-50 text-sm text-brand-800">
           {error}
         </div>
       ) : contractors.length === 0 ? (
         <div className="card p-10 text-center">
-          <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-2xl">
-            ★
+          <div className="mx-auto h-12 w-12 rounded-full bg-surface-alt flex items-center justify-center text-brand-500">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
           </div>
-          <h2 className="mt-4 font-semibold text-slate-900">No saved contractors yet</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Tap the star on any contractor to save them here for quick comparison.
+          <h2 className="mt-4 font-semibold text-ink">No saved contractors yet</h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            Tap the heart on any contractor to save them here for quick comparison.
           </p>
           <Link href="/search" className="btn-primary mt-6 inline-flex">
             Start searching

@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 // Vercel auto-sets VERCEL_URL at build time (e.g. "my-app-abc123.vercel.app").
 // We prefer NEXT_PUBLIC_SITE_URL if provided (for a stable custom domain),
@@ -12,17 +19,17 @@ const siteUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "TrustBuild — Find & Vet Licensed Contractors",
-    template: "%s · TrustBuild",
+    default: "Plumbd — Find & Vet Licensed Contractors",
+    template: "%s · Plumbd",
   },
   description:
     "Search licensed contractors, verify bonds, workers' comp, and disciplinary history. Built for trust.",
   openGraph: {
-    title: "TrustBuild — Find & Vet Licensed Contractors",
+    title: "Plumbd — Find & Vet Licensed Contractors",
     description:
       "Search licensed contractors, verify bonds, workers' comp, and disciplinary history. Built for trust.",
     url: "/",
-    siteName: "TrustBuild",
+    siteName: "Plumbd",
     type: "website",
   },
   robots: { index: true, follow: true },
@@ -31,7 +38,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#2f6bff",
+  themeColor: "#d7263d",
 };
 
 export default function RootLayout({
@@ -40,26 +47,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen flex flex-col font-sans antialiased">
-        <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-20">
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen flex flex-col font-sans antialiased bg-surface text-ink">
+        <header className="border-b border-hairline bg-surface sticky top-0 z-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white text-sm">
-                TB
-              </span>
-              <span>TrustBuild</span>
+            <Link
+              href="/"
+              className="flex items-baseline gap-0.5 text-ink"
+              aria-label="Plumbd home"
+            >
+              <span className="text-lg font-semibold tracking-tightish">Plumbd</span>
+              <span
+                aria-hidden
+                className="h-1.5 w-1.5 rounded-full bg-brand-500 translate-y-[-1px]"
+              />
             </Link>
             <nav className="flex items-center gap-1 text-sm">
               <Link
                 href="/search"
-                className="rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100"
+                className="rounded-md px-3 py-2 text-ink-muted hover:text-ink hover:bg-surface-alt"
               >
                 Search
               </Link>
               <Link
                 href="/saved"
-                className="rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100"
+                className="rounded-md px-3 py-2 text-ink-muted hover:text-ink hover:bg-surface-alt"
               >
                 Saved
               </Link>
@@ -69,9 +81,9 @@ export default function RootLayout({
 
         <main className="flex-1">{children}</main>
 
-        <footer className="border-t border-slate-200 bg-white">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
-            <span>© TrustBuild</span>
+        <footer className="border-t border-hairline bg-surface">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 text-xs text-ink-subtle flex flex-wrap items-center justify-between gap-2">
+            <span>© Plumbd</span>
             <span>Licensing data sourced from public records. Verify before hiring.</span>
           </div>
         </footer>

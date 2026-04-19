@@ -9,6 +9,24 @@ interface Props {
   className?: string;
 }
 
+function Heart({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
+
 export default function SaveContractorButton({
   licenseNumber,
   variant = "full",
@@ -47,13 +65,13 @@ export default function SaveContractorButton({
         onClick={onClick}
         aria-label={active ? "Unsave contractor" : "Save contractor"}
         title={active ? "Saved" : "Save"}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border text-lg transition-colors ${
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
           active
-            ? "border-amber-300 bg-amber-50 text-amber-600"
-            : "border-slate-300 bg-white text-slate-500 hover:bg-slate-50"
+            ? "border-brand-500 bg-brand-50 text-brand-500"
+            : "border-hairline bg-surface text-ink-muted hover:text-brand-500 hover:border-brand-200"
         } ${className}`}
       >
-        {active ? "★" : "☆"}
+        <Heart filled={active} />
       </button>
     );
   }
@@ -64,11 +82,11 @@ export default function SaveContractorButton({
       onClick={onClick}
       className={`btn ${
         active
-          ? "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          ? "border border-brand-500 bg-brand-50 text-brand-600 hover:bg-brand-100"
+          : "border border-hairline bg-surface text-ink hover:bg-surface-alt"
       } ${className}`}
     >
-      <span>{active ? "★" : "☆"}</span>
+      <Heart filled={active} />
       <span>{active ? "Saved" : "Save"}</span>
     </button>
   );

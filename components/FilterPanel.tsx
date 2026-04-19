@@ -71,11 +71,11 @@ export default function FilterPanel({ counties, primaryTrades }: Props) {
   return (
     <aside className="card p-5 space-y-5 sticky top-20">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">Filters</h2>
+        <h2 className="text-sm font-semibold text-ink">Filters</h2>
         <button
           type="button"
           onClick={clearAll}
-          className="text-xs text-slate-500 hover:text-slate-800"
+          className="text-xs text-ink-subtle hover:text-ink"
         >
           Clear
         </button>
@@ -84,18 +84,18 @@ export default function FilterPanel({ counties, primaryTrades }: Props) {
       <label className="flex items-center gap-3 cursor-pointer">
         <input
           type="checkbox"
-          className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          className="h-4 w-4 rounded border-hairline text-brand-500 focus:ring-brand-500"
           checked={activeOnly}
           onChange={(e) => {
             setActiveOnly(e.target.checked);
             apply({ activeOnly: e.target.checked });
           }}
         />
-        <span className="text-sm text-slate-800">Active licenses only</span>
+        <span className="text-sm text-ink">Active licenses only</span>
       </label>
 
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1.5">County</label>
+        <label className="block text-xs font-medium text-ink-muted mb-1.5">County</label>
         <select
           className="input"
           value={county}
@@ -114,7 +114,7 @@ export default function FilterPanel({ counties, primaryTrades }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+        <label className="block text-xs font-medium text-ink-muted mb-1.5">
           Primary trade
         </label>
         <select

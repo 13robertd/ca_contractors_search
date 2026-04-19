@@ -18,15 +18,15 @@ interface BadgeProps {
 
 function Badge({ label, ok, warn, title }: BadgeProps) {
   const tone = warn
-    ? "bg-rose-50 text-rose-700 ring-rose-200"
+    ? "bg-brand-50 text-brand-700 ring-brand-200"
     : ok
-    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-    : "bg-slate-50 text-slate-500 ring-slate-200";
+    ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+    : "bg-surface-alt text-ink-subtle ring-hairline";
   const icon = warn ? "!" : ok ? "✓" : "–";
   return (
     <span
       title={title ?? label}
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${tone}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${tone}`}
     >
       <span className="font-bold">{icon}</span>
       {label}

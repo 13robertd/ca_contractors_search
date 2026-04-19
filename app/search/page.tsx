@@ -61,10 +61,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
         <section>
           <div className="flex items-end justify-between mb-4">
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">
+              <h1 className="text-xl font-semibold text-ink">
                 {results.length} result{results.length === 1 ? "" : "s"}
               </h1>
-              <p className="text-sm text-slate-600 mt-0.5">{summary}</p>
+              <p className="text-sm text-ink-muted mt-0.5">{summary}</p>
             </div>
           </div>
 
@@ -105,11 +105,14 @@ function buildSummary(args: {
 function EmptyState() {
   return (
     <div className="card p-10 text-center">
-      <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-2xl">
-        🔍
+      <div className="mx-auto h-12 w-12 rounded-full bg-surface-alt flex items-center justify-center text-ink-muted">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
       </div>
-      <h2 className="mt-4 font-semibold text-slate-900">No contractors found</h2>
-      <p className="mt-1 text-sm text-slate-600">
+      <h2 className="mt-4 font-semibold text-ink">No contractors found</h2>
+      <p className="mt-1 text-sm text-ink-muted">
         Try a broader location, a different trade keyword, or turn off the
         &quot;Active licenses only&quot; filter.
       </p>
