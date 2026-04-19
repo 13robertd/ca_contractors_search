@@ -3,11 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f8fafc;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --text: #0f172a;
-  --text-muted: #475569;
-  --border: #e2e8f0;
+  --surface-alt: #fafaf7;
+  --surface-sunken: #f4f1ec;
+  --text: #1a1a1a;
+  --text-muted: #5c5c5c;
+  --border: #e6e1da;
+  --accent: #d7263d;
+  --accent-tint: #fcedef;
 }
 
 html,
@@ -16,26 +20,45 @@ body {
   color: var(--text);
 }
 
+body {
+  font-feature-settings: "cv11", "ss01";
+}
+
+@layer base {
+  h1, h2, h3, h4 {
+    letter-spacing: -0.01em;
+  }
+}
+
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-colors;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn bg-brand-500 text-white hover:bg-brand-600 focus-visible:outline-none focus-visible:shadow-focus;
   }
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    @apply btn border border-hairline bg-surface text-ink hover:bg-surface-alt;
+  }
+  .btn-ghost {
+    @apply btn text-ink-muted hover:text-ink hover:bg-surface-alt;
   }
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm
-           placeholder:text-slate-400 focus:border-brand-500 focus:outline-none
-           focus:ring-2 focus:ring-brand-100;
+    @apply w-full rounded-md border border-hairline bg-surface px-3.5 py-2.5 text-sm text-ink
+           placeholder:text-ink-subtle focus:border-brand-500 focus:outline-none
+           focus:shadow-focus;
   }
   .card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+    @apply rounded-md border border-hairline bg-surface shadow-card transition-shadow;
+  }
+  .card-interactive {
+    @apply card hover:shadow-cardHover;
   }
   .chip {
-    @apply inline-flex items-center rounded-full border border-slate-200
-           bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700;
+    @apply inline-flex items-center rounded-full border border-hairline
+           bg-surface-alt px-3 py-1 text-xs font-medium text-ink-muted;
+  }
+  .chip-selected {
+    @apply border-brand-500 bg-brand-50 text-brand-700;
   }
 }

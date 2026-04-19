@@ -1,4 +1,4 @@
-# TrustBuild — Contractor Search & Vetting (MVP)
+# Plumbd — Contractor Search & Vetting (MVP)
 
 A Next.js 15 + Tailwind + Supabase web app for searching licensed contractors
 and checking their compliance signals at a glance. Built against your existing

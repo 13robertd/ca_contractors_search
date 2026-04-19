@@ -49,7 +49,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-8">
       <div className="mb-4">
-        <Link href="/search" className="text-sm text-slate-500 hover:text-brand-700">
+        <Link href="/search" className="text-sm text-ink-muted hover:text-brand-600">
           ← Back to results
         </Link>
       </div>
@@ -58,16 +58,16 @@ export default async function ContractorDetailPage({ params }: PageProps) {
       <div className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tightish text-ink">
               {c.business_name}
             </h1>
             {c.full_business_name && c.full_business_name !== c.business_name ? (
-              <p className="text-sm text-slate-500 mt-1">{c.full_business_name}</p>
+              <p className="text-sm text-ink-subtle mt-1">{c.full_business_name}</p>
             ) : null}
-            <p className="text-sm text-slate-700 mt-2">
+            <p className="text-sm text-ink mt-2">
               {c.primary_trade || "General contractor"}
-              {c.city ? <> · <span className="text-slate-500">{c.city}</span></> : null}
-              {c.county ? <> · <span className="text-slate-500">{c.county} County</span></> : null}
+              {c.city ? <> · <span className="text-ink-muted">{c.city}</span></> : null}
+              {c.county ? <> · <span className="text-ink-muted">{c.county} County</span></> : null}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <StatusBadge contractor={c} />
@@ -86,7 +86,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
         </div>
 
         {c.suspension_reason ? (
-          <div className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+          <div className="mt-5 rounded-md border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800">
             <div className="font-semibold">Suspension reason</div>
             <p className="mt-0.5">{c.suspension_reason}</p>
           </div>
@@ -95,8 +95,8 @@ export default async function ContractorDetailPage({ params }: PageProps) {
 
       {/* Trust summary */}
       <div className="card p-6 mt-6">
-        <h2 className="text-base font-semibold text-slate-900">Trust summary</h2>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <h2 className="text-base font-semibold text-ink">Trust summary</h2>
+        <p className="text-sm text-ink-muted mt-0.5">
           Key compliance and insurance signals from public records.
         </p>
 
@@ -111,12 +111,12 @@ export default async function ContractorDetailPage({ params }: PageProps) {
                 ? "text-emerald-700"
                 : it.tone === "warn"
                 ? "text-amber-700"
-                : "text-rose-700";
+                : "text-brand-700";
             const icon = it.tone === "good" ? "✓" : it.tone === "warn" ? "!" : "✕";
             return (
               <li key={it.label} className="flex items-start gap-2 text-sm">
                 <span className={`font-bold ${cls}`}>{icon}</span>
-                <span className="text-slate-700">{it.label}</span>
+                <span className="text-ink">{it.label}</span>
               </li>
             );
           })}
@@ -126,11 +126,11 @@ export default async function ContractorDetailPage({ params }: PageProps) {
       {/* Details grid */}
       <div className="grid gap-6 mt-6 md:grid-cols-2">
         <section className="card p-6">
-          <h2 className="text-base font-semibold text-slate-900">Contact</h2>
+          <h2 className="text-base font-semibold text-ink">Contact</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <Row label="Phone">
               {c.phone ? (
-                <a href={`tel:${c.phone}`} className="hover:text-brand-700">
+                <a href={`tel:${c.phone}`} className="hover:text-brand-600">
                   {formatPhone(c.phone)}
                 </a>
               ) : (
@@ -144,7 +144,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
         </section>
 
         <section className="card p-6">
-          <h2 className="text-base font-semibold text-slate-900">License</h2>
+          <h2 className="text-base font-semibold text-ink">License</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <Row label="License #">{c.license_number}</Row>
             <Row label="Status">{c.primary_status || "—"}</Row>
@@ -159,16 +159,16 @@ export default async function ContractorDetailPage({ params }: PageProps) {
       {/* Classifications */}
       <section className="card p-6 mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-ink">
             Classifications
           </h2>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-ink-subtle">
             {c.classification_count} total
           </span>
         </div>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <p className="text-sm text-ink-muted mt-0.5">
           Primary trade:{" "}
-          <span className="text-slate-700 font-medium">
+          <span className="text-ink font-medium">
             {c.primary_trade || "—"}
           </span>
         </p>
@@ -176,7 +176,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
           <ClassificationTags labels={c.classification_labels} />
         </div>
         {c.classification_codes && c.classification_codes.length > 0 ? (
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-ink-subtle">
             Codes: {c.classification_codes.join(", ")}
           </p>
         ) : null}
@@ -194,8 +194,8 @@ function Row({
 }) {
   return (
     <div className="grid grid-cols-[auto_1fr] gap-3">
-      <dt className="text-slate-500 w-32">{label}</dt>
-      <dd className="text-slate-900 font-medium break-words">{children}</dd>
+      <dt className="text-ink-muted w-32">{label}</dt>
+      <dd className="text-ink font-medium break-words">{children}</dd>
     </div>
   );
 }
