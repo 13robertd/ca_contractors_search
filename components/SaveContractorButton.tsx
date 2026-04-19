@@ -20,7 +20,6 @@ export default function SaveContractorButton({
   useEffect(() => {
     setMounted(true);
     setSaved(isSaved(licenseNumber));
-
     const refresh = () => setSaved(isSaved(licenseNumber));
     window.addEventListener("saved-contractors-changed", refresh);
     window.addEventListener("storage", refresh);
@@ -33,11 +32,9 @@ export default function SaveContractorButton({
   function onClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const next = toggleSaved(licenseNumber);
-    setSaved(next);
+    setSaved(toggleSaved(licenseNumber));
   }
 
-  // Avoid hydration mismatch — don't render saved state until mounted.
   const active = mounted && saved;
 
   if (variant === "icon") {
@@ -45,15 +42,12 @@ export default function SaveContractorButton({
       <button
         type="button"
         onClick={onClick}
+        aria-pressed={active}
         aria-label={active ? "Unsave contractor" : "Save contractor"}
         title={active ? "Saved" : "Save"}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border text-lg transition-colors ${
-          active
-            ? "border-amber-300 bg-amber-50 text-amber-600"
-            : "border-slate-300 bg-white text-slate-500 hover:bg-slate-50"
-        } ${className}`}
+        className={`btn-icon ${active ? "!border-ink !bg-ink !text-white hover:!bg-fixd-hover" : ""} ${className}`}
       >
-        {active ? "★" : "☆"}
+        <BookmarkIcon filled={active} />
       </button>
     );
   }
@@ -62,14 +56,26 @@ export default function SaveContractorButton({
     <button
       type="button"
       onClick={onClick}
-      className={`btn ${
-        active
-          ? "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-      } ${className}`}
+      aria-pressed={active}
+      className={`btn ${active ? "bg-ink text-white hover:bg-fixd-hover" : "bg-white border border-line text-ink hover:bg-surface-subtle"} ${className}`}
     >
-      <span>{active ? "★" : "☆"}</span>
+      <BookmarkIcon filled={active} />
       <span>{active ? "Saved" : "Save"}</span>
     </button>
+  );
+}
+
+function BookmarkIcon({ filled }: { filled: boolean }) {
+  if (filled) {
+    return (
+      <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
+        <path d="M5 3a2 2 0 0 0-2 2v13l7-3.2L17 18V5a2 2 0 0 0-2-2H5Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M5 3.75A1.75 1.75 0 0 1 6.75 2h6.5A1.75 1.75 0 0 1 15 3.75v14l-5-2.4-5 2.4v-14Z" strokeLinejoin="round" />
+    </svg>
   );
 }

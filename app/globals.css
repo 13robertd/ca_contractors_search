@@ -2,40 +2,138 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --text: #0f172a;
-  --text-muted: #475569;
-  --border: #e2e8f0;
+/* ---------- base ---------- */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-html,
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: theme("colors.surface.DEFAULT");
+  color: theme("colors.ink.DEFAULT");
+  font-feature-settings: "cv11", "ss01", "ss03";
 }
 
+::selection {
+  background: theme("colors.ink.DEFAULT");
+  color: white;
+}
+
+/* ---------- centralized component utilities ----------
+ *  Prefer editing these classes over scattering styles through JSX.
+ *  Everything consumed through @apply → stays in sync with tailwind tokens.
+ */
 @layer components {
+
+  /* Layout */
+  .page-container {
+    @apply mx-auto w-full max-w-page px-4 sm:px-6 lg:px-8;
+  }
+  .section {
+    @apply py-12 sm:py-16;
+  }
+
+  /* Buttons — solid, ghost, subtle */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors;
+    @apply inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-md
+           text-sm font-medium whitespace-nowrap
+           transition-all duration-150
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn bg-fixd text-white hover:bg-fixd-hover shadow-sm;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-ink hover:bg-surface-subtle;
   }
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    @apply btn bg-white border border-line text-ink hover:bg-surface-subtle;
   }
+  .btn-lg {
+    @apply h-11 px-5 text-sm;
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-md
+           border border-line bg-white text-ink-muted
+           transition-colors hover:bg-surface-subtle hover:text-ink
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2;
+  }
+
+  /* Inputs */
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm
-           placeholder:text-slate-400 focus:border-brand-500 focus:outline-none
-           focus:ring-2 focus:ring-brand-100;
+    @apply w-full h-10 rounded-md border border-line bg-white px-3 text-sm text-ink
+           placeholder:text-ink-soft
+           transition-colors
+           focus:outline-none focus:border-ink focus:ring-4 focus:ring-ink/5;
   }
+  .input-lg { @apply h-12 text-base px-4; }
+  .select {
+    @apply input appearance-none bg-no-repeat pr-9
+           bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2020%2020%27%20fill%3D%27%236B7280%27%3E%3Cpath%20fill-rule%3D%27evenodd%27%20d%3D%27M5.23%207.21a.75.75%200%20011.06.02L10%2011.06l3.71-3.83a.75.75%200%20111.08%201.04l-4.25%204.4a.75.75%200%2001-1.08%200L5.21%208.27a.75.75%200%2001.02-1.06z%27%20clip-rule%3D%27evenodd%27/%3E%3C/svg%3E")]
+           bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center];
+  }
+
+  /* Cards */
   .card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+    @apply rounded-lg border border-line bg-white shadow-card;
   }
+  .card-interactive {
+    @apply card transition-[box-shadow,transform,border-color] duration-150
+           hover:shadow-card-hover hover:border-line-strong;
+  }
+
+  /* Pills / tags / chips */
   .chip {
-    @apply inline-flex items-center rounded-full border border-slate-200
-           bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700;
+    @apply inline-flex items-center h-6 px-2 rounded-sm
+           text-[11px] font-medium leading-none
+           border border-line bg-surface-subtle text-ink-muted;
+  }
+
+  /* Badges — semantic variants */
+  .badge {
+    @apply inline-flex items-center gap-1 h-6 px-2 rounded-sm
+           text-[11px] font-medium leading-none ring-1 ring-inset;
+  }
+  .badge-positive { @apply badge bg-positive-50 text-positive-700 ring-positive-200; }
+  .badge-neutral  { @apply badge bg-surface-subtle text-ink-muted ring-line; }
+  .badge-warning  { @apply badge bg-warning-50 text-warning-700 ring-warning-200; }
+  .badge-danger   { @apply badge bg-danger-50 text-danger-700 ring-danger-200; }
+
+  /* Status dot (used inline) */
+  .status-dot { @apply inline-block h-1.5 w-1.5 rounded-full; }
+
+  /* Skeletons */
+  .skeleton {
+    @apply relative overflow-hidden bg-surface-subtle rounded-sm;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 100%
+    );
+    animation: fixd-shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes fixd-shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Map placeholder background — subtle grid */
+  .map-placeholder {
+    background-color: theme("colors.surface.subtle");
+    background-image:
+      linear-gradient(theme("colors.line.DEFAULT") 1px, transparent 1px),
+      linear-gradient(90deg, theme("colors.line.DEFAULT") 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
   }
 }

@@ -3,16 +3,21 @@
 > **TL;DR for agents:** This is a Next.js 15 App Router contractor-search MVP
 > backed by a live Supabase `contractors` table. Data is public-read, no auth
 > yet, no fake data, no extra tables. Focus your review on `lib/queries.ts`
-> (search correctness + Postgres efficiency) and the server/client split.
+> (search correctness + Postgres efficiency), the server/client split, and
+> the Fixd design system in `tailwind.config.ts` + `app/globals.css`.
 
 ---
 
 ## Product
 
-**TrustBuild** is a contractor search + vetting web app — think CSLB + BuildZoom
+**Fixd** is a contractor search + vetting web app — think CSLB + BuildZoom
 + Yelp's local-search UX, minus reviews and auth. It queries a Supabase table
 of licensed contractors and renders trust signals (active/expired, workers'
 comp, bond, disciplinary history) at a glance.
+
+Brand direction: **clear, fast, modern, utility-first, trustworthy.** Avoid
+playful startup gimmicks, decorative gradients, or lifestyle/blog aesthetics.
+Think Stripe / Linear / Notion — a serious consumer product.
 
 ## Tech stack
 
@@ -42,9 +47,12 @@ app/                         ← routes + layouts
   api/contractors/by-licenses/route.ts   ← POST { licenses: string[] }
   contractor/[license_number]/page.tsx   ← detail page (server component)
   saved/page.tsx                         ← client component (localStorage)
-  search/page.tsx                        ← server component
-  layout.tsx, page.tsx, globals.css, not-found.tsx
-components/                  ← reusable UI (Search, Card, Filter, Badges…)
+  search/page.tsx                        ← server component (2-column layout)
+  layout.tsx                             ← Fixd header/footer, Inter font
+  page.tsx, globals.css
+components/                  ← reusable UI
+  SearchBar, ContractorCard, FilterPanel, StatusBadge,
+  TrustBadgeRow, SaveContractorButton, ClassificationTags, Skeleton
 lib/
   supabase.ts                ← lazy anon-key Supabase client singleton
   queries.ts                 ← ⭐ ALL Supabase read queries live here
@@ -55,7 +63,24 @@ types/
 scripts/
   check-env.mjs              ← pre-deploy env validator
   deploy.sh                  ← check-env → next build → vercel
+tailwind.config.ts           ← ⭐ design tokens (colors, type, radii, shadows)
+app/globals.css              ← ⭐ centralized component utilities (btn/card/input/chip/badge/skeleton)
 ```
+
+## Design system
+
+The visual system lives in **two files**. Everything else composes these:
+
+- **`tailwind.config.ts`** — color tokens (`ink`, `surface`, `line`, `fixd`,
+  semantic `positive`/`warning`/`danger`), typography scale (`text-display`,
+  `text-h1`…`text-h3`), radii, shadows, `max-w-page`.
+- **`app/globals.css`** — `@layer components` utilities consumed as class
+  names: `.page-container`, `.btn-primary/ghost/secondary/icon`,
+  `.input` / `.select`, `.card` / `.card-interactive`, `.chip`,
+  `.badge-positive/neutral/warning/danger`, `.skeleton`, `.map-placeholder`.
+
+**Rule:** if you're about to write ad-hoc `bg-*`/`border-*` classes that
+repeat, promote them into `globals.css` under `@layer components` instead.
 
 ## Environment variables
 

@@ -6,7 +6,7 @@ interface Props {
 export default function ClassificationTags({ labels, max }: Props) {
   const list = labels ?? [];
   if (list.length === 0) {
-    return <span className="text-xs text-slate-400">No classifications listed</span>;
+    return <span className="text-xs text-ink-soft">No classifications listed</span>;
   }
   const shown = typeof max === "number" ? list.slice(0, max) : list;
   const remaining = list.length - shown.length;
@@ -19,7 +19,7 @@ export default function ClassificationTags({ labels, max }: Props) {
         </span>
       ))}
       {remaining > 0 ? (
-        <span className="chip bg-white text-slate-500">+{remaining} more</span>
+        <span className="chip bg-white">+{remaining} more</span>
       ) : null}
     </div>
   );

@@ -9,26 +9,27 @@ type Subset = Pick<
   | "has_disciplinary_history"
 >;
 
+type Tone = "positive" | "neutral" | "warning" | "danger";
+
 interface BadgeProps {
   label: string;
-  ok: boolean;
-  warn?: boolean;
+  tone: Tone;
   title?: string;
 }
 
-function Badge({ label, ok, warn, title }: BadgeProps) {
-  const tone = warn
-    ? "bg-rose-50 text-rose-700 ring-rose-200"
-    : ok
-    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-    : "bg-slate-50 text-slate-500 ring-slate-200";
-  const icon = warn ? "!" : ok ? "✓" : "–";
+const TONE_CLS: Record<Tone, string> = {
+  positive: "badge-positive",
+  neutral: "badge-neutral",
+  warning: "badge-warning",
+  danger: "badge-danger",
+};
+
+function Badge({ label, tone, title }: BadgeProps) {
+  const glyph =
+    tone === "positive" ? "✓" : tone === "danger" || tone === "warning" ? "!" : "–";
   return (
-    <span
-      title={title ?? label}
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${tone}`}
-    >
-      <span className="font-bold">{icon}</span>
+    <span className={TONE_CLS[tone]} title={title ?? label}>
+      <span className="font-semibold">{glyph}</span>
       {label}
     </span>
   );
@@ -37,27 +38,26 @@ function Badge({ label, ok, warn, title }: BadgeProps) {
 export default function TrustBadgeRow({ contractor }: { contractor: Subset }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      <Badge label="Active" ok={!!contractor.is_active} title="Currently active license" />
+      <Badge
+        label="Active"
+        tone={contractor.is_active ? "positive" : "neutral"}
+        title="Currently active license"
+      />
       <Badge
         label="Workers' Comp"
-        ok={!!contractor.has_workers_comp}
+        tone={contractor.has_workers_comp ? "positive" : "neutral"}
         title="Workers' compensation insurance on file"
       />
       <Badge
         label="Bonded"
-        ok={!!contractor.has_contractor_bond}
+        tone={contractor.has_contractor_bond ? "positive" : "neutral"}
         title="Contractor bond on file"
       />
       {contractor.has_disciplinary_history ? (
-        <Badge label="Discipline" ok={false} warn title="Has disciplinary history" />
+        <Badge label="Discipline" tone="warning" title="Has disciplinary history" />
       ) : null}
       {contractor.has_pending_suspension ? (
-        <Badge
-          label="Pending Suspension"
-          ok={false}
-          warn
-          title="Has pending suspension"
-        />
+        <Badge label="Pending Suspension" tone="danger" title="Has pending suspension" />
       ) : null}
     </div>
   );

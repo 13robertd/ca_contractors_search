@@ -5,7 +5,13 @@ import StatusBadge from "./StatusBadge";
 import TrustBadgeRow from "./TrustBadgeRow";
 import SaveContractorButton from "./SaveContractorButton";
 
-export default function ContractorCard({ contractor }: { contractor: Contractor }) {
+interface Props {
+  contractor: Contractor;
+  /** Slim variant used on the saved page. */
+  dense?: boolean;
+}
+
+export default function ContractorCard({ contractor, dense }: Props) {
   const c = contractor;
   const href = `/contractor/${encodeURIComponent(c.license_number)}`;
   const location = [c.city, c.county ? `${c.county} County` : null]
@@ -13,56 +19,83 @@ export default function ContractorCard({ contractor }: { contractor: Contractor 
     .join(" · ");
 
   return (
-    <article className="card p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link href={href} className="block">
-            <h3 className="text-base sm:text-lg font-semibold text-slate-900 hover:text-brand-700 truncate">
+    <article className="card-interactive group relative flex flex-col">
+      {/* Full-card click target sits behind the interactive controls */}
+      <Link
+        href={href}
+        aria-label={`Open ${c.business_name} details`}
+        className="absolute inset-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+      />
+
+      <div className={`relative ${dense ? "p-4" : "p-5"} flex flex-col gap-4`}>
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-h3 text-ink truncate group-hover:underline underline-offset-2 decoration-ink/30">
               {c.business_name}
             </h3>
-          </Link>
-          <p className="mt-0.5 text-sm text-slate-600 truncate">
-            {c.primary_trade || "General contractor"}
-            {location ? <> · <span className="text-slate-500">{location}</span></> : null}
-          </p>
+            <p className="mt-0.5 text-sm text-ink-muted truncate">
+              {c.primary_trade || "General contractor"}
+              {location ? <> · <span>{location}</span></> : null}
+            </p>
+          </div>
+          <div className="flex items-start gap-2 shrink-0 relative z-10">
+            <StatusBadge contractor={c} />
+            <SaveContractorButton licenseNumber={c.license_number} variant="icon" />
+          </div>
         </div>
-        <div className="flex items-start gap-2 shrink-0">
-          <StatusBadge contractor={c} />
-          <SaveContractorButton licenseNumber={c.license_number} variant="icon" />
-        </div>
-      </header>
 
-      <TrustBadgeRow contractor={c} />
+        {/* Trust row */}
+        <TrustBadgeRow contractor={c} />
 
-      <dl className="grid grid-cols-3 gap-3 text-sm">
-        <div>
-          <dt className="text-xs text-slate-500">Years</dt>
-          <dd className="font-medium text-slate-900">{formatYears(c.years_in_business)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-slate-500">License #</dt>
-          <dd className="font-medium text-slate-900 truncate">{c.license_number}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-slate-500">Phone</dt>
-          <dd className="font-medium text-slate-900 truncate">
-            {c.phone ? (
-              <a href={`tel:${c.phone}`} className="hover:text-brand-700">
-                {formatPhone(c.phone)}
-              </a>
-            ) : (
-              "—"
-            )}
-          </dd>
-        </div>
-      </dl>
-
-      <div className="flex items-center gap-2 pt-1">
-        <Link href={href} className="btn-primary flex-1 sm:flex-none">
-          View details
-        </Link>
-        <SaveContractorButton licenseNumber={c.license_number} />
+        {!dense ? (
+          <dl className="grid grid-cols-3 gap-4 text-sm pt-1">
+            <Stat label="Years" value={formatYears(c.years_in_business)} />
+            <Stat label="License" value={c.license_number} mono />
+            <Stat
+              label="Phone"
+              value={
+                c.phone ? (
+                  <a
+                    href={`tel:${c.phone}`}
+                    className="relative z-10 hover:text-ink"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {formatPhone(c.phone)}
+                  </a>
+                ) : (
+                  "—"
+                )
+              }
+            />
+          </dl>
+        ) : null}
       </div>
     </article>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] uppercase tracking-wide font-medium text-ink-soft">
+        {label}
+      </dt>
+      <dd
+        className={`mt-0.5 text-sm text-ink font-medium truncate ${
+          mono ? "tabular-nums" : ""
+        }`}
+      >
+        {value}
+      </dd>
+    </div>
   );
 }
