@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mapbox GL JS base styles (required for the map canvas + controls). */
+@import "mapbox-gl/dist/mapbox-gl.css";
+
 /* ---------- base ---------- */
 html {
   -webkit-font-smoothing: antialiased;
@@ -136,4 +139,43 @@ body {
     background-size: 28px 28px;
     background-position: -1px -1px;
   }
+}
+
+/* ---------- Mapbox marker pills ----------
+ * Custom markers rendered by ContractorMap. Kept outside @layer components
+ * so they win against mapbox-gl's defaults without @apply gymnastics.
+ */
+.cm-marker {
+  cursor: pointer;
+  transform: translateY(0);
+  transition: transform 120ms ease;
+}
+.cm-marker:hover { transform: translateY(-2px); }
+
+.cm-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #0B0F14;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid #E4E4E7;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.08);
+  white-space: nowrap;
+  font-feature-settings: "tnum";
+  transition: background-color 120ms ease, color 120ms ease,
+    border-color 120ms ease, transform 120ms ease;
+}
+.cm-marker:hover .cm-pill {
+  border-color: #0B0F14;
+}
+.cm-marker[data-active="true"] .cm-pill {
+  background: #0B0F14;
+  color: #ffffff;
+  border-color: #0B0F14;
+  transform: scale(1.06);
 }
