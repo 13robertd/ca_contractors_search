@@ -59,7 +59,6 @@ export default function ContractorCard({ contractor, dense }: Props) {
                   <a
                     href={`tel:${c.phone}`}
                     className="relative z-10 hover:text-ink"
-                    onClick={(e) => e.stopPropagation()}
                   >
                     {formatPhone(c.phone)}
                   </a>
