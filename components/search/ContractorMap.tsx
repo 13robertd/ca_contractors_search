@@ -105,14 +105,11 @@ export default function ContractorMap({
           e.stopPropagation();
           onMarkerSelect(l.license_number);
         });
-        marker = new mapboxgl.Marker({ element: el, anchor: "bottom" })
+        marker = new mapboxgl.Marker({ element: el, anchor: "center" })
           .setLngLat([l.longitude, l.latitude])
           .addTo(map);
       } else {
         marker.setLngLat([l.longitude, l.latitude]);
-        // Refresh price label in case the same license re-renders with new data.
-        const label = marker.getElement().querySelector(".cm-label");
-        if (label) label.textContent = `$${l.hourlyRate}`;
       }
       next.set(l.license_number, marker);
     }
@@ -162,12 +159,9 @@ function buildMarkerEl(l: ContractorListing): HTMLElement {
   const el = document.createElement("div");
   el.className = "cm-marker";
   el.setAttribute("role", "button");
-  el.setAttribute("aria-label", `${l.business_name} — $${l.hourlyRate}/hr`);
-  el.innerHTML = `
-    <span class="cm-pill">
-      <span class="cm-label">$${l.hourlyRate}</span>
-    </span>
-  `;
+  el.setAttribute("aria-label", l.business_name);
+  el.setAttribute("title", l.business_name);
+  el.innerHTML = '<span class="cm-dot"></span>';
   return el;
 }
 

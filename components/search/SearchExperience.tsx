@@ -126,7 +126,6 @@ export default function SearchExperience({ listings, initial }: Props) {
             highlightedId={highlightedId}
             selectedId={selectedId}
             onHover={handleHover}
-            onSelect={handleMarkerSelect}
           />
 
           {noGeoData ? (

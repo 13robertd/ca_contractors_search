@@ -9,7 +9,6 @@ interface Props {
   highlightedId: string | null;
   selectedId: string | null;
   onHover: (id: string | null) => void;
-  onSelect: (id: string) => void;
 }
 
 export default function ContractorList({
@@ -17,7 +16,6 @@ export default function ContractorList({
   highlightedId,
   selectedId,
   onHover,
-  onSelect,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +53,6 @@ export default function ContractorList({
               selectedId === l.license_number
             }
             onHover={onHover}
-            onSelect={onSelect}
           />
         </div>
       ))}
