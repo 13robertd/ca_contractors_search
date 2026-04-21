@@ -18,6 +18,9 @@ import type { CardSize } from "./ContractorCard";
  *   │                               [years] yrs
  *   └
  *
+ * All critical layout + sizing is inline-style driven so we don't rely
+ * on Tailwind's JIT picking up arbitrary bracket utilities at build time.
+ *
  * Presentation-only; the outer ContractorCard owns the Link + heart.
  */
 
@@ -30,59 +33,85 @@ const MAX_SEGMENTS = 3;
 
 export default function TradeVariant({ contractor: c, size }: Props) {
   const trades = cardTradeOrder(c.classifications, c.type);
-  const shown = trades.slice(0, MAX_SEGMENTS);
+  const shown: TradeSlug[] =
+    trades.length > 0 ? trades.slice(0, MAX_SEGMENTS) : ["general"];
   const isCompact = size === "compact";
 
   // Canvas: pale trade tint for Specialist, warm cream otherwise.
-  const canvasColor =
-    c.type === "specialist" ? TRADE_COLORS[c.primaryTrade].tint : "#F7F5F0";
+  const primaryTint = TRADE_COLORS[c.primaryTrade]?.tint ?? "#F7F5F0";
+  const canvasColor = c.type === "specialist" ? primaryTint : "#F7F5F0";
 
   // Number-hero color: primary trade color for Specialist; neutral for others.
   const heroColor =
     c.type === "specialist"
-      ? TRADE_COLORS[c.primaryTrade].text
+      ? TRADE_COLORS[c.primaryTrade]?.text ?? "#222222"
       : c.type === "generalist"
       ? TRADE_COLORS.general.text
       : "#222222";
 
-  const barHeight = isCompact ? 5 : 6;
-  const padding = isCompact ? "p-2" : "p-[10px]";
-  const iconSize = isCompact ? 14 : 16;
-  const heroNumSize = isCompact ? "text-[44px]" : "text-[52px]";
-  const heroYrsSize = isCompact ? "text-[11px]" : "text-[13px]";
-  const chipSize = isCompact ? "text-[8px] px-1.5 py-[1px]" : "text-[9px] px-[7px] py-[2px]";
+  const barHeightPx = isCompact ? 5 : 6;
+  const paddingPx = isCompact ? 8 : 10;
+  const iconSizePx = isCompact ? 16 : 18;
+  const heroNumPx = isCompact ? 44 : 52;
+  const heroYrsPx = isCompact ? 11 : 13;
+  const chipFontPx = isCompact ? 8 : 9;
+  const chipPadV = isCompact ? 1 : 2;
+  const chipPadH = isCompact ? 6 : 7;
+
+  const yearsText =
+    typeof c.yearsInBusiness === "number" && Number.isFinite(c.yearsInBusiness)
+      ? String(c.yearsInBusiness)
+      : "—";
 
   return (
     <div
-      className="absolute inset-0 flex flex-col"
-      style={{ backgroundColor: canvasColor }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: canvasColor,
+      }}
     >
       {/* Top color bar */}
       <div
-        className="flex w-full shrink-0"
-        style={{ height: `${barHeight}px` }}
         aria-hidden
+        style={{
+          display: "flex",
+          width: "100%",
+          height: barHeightPx,
+          flexShrink: 0,
+        }}
       >
         {shown.map((t, i) => (
           <span
             key={`${t}-${i}`}
-            className="flex-1"
-            style={{ backgroundColor: TRADE_COLORS[t].bar }}
+            style={{
+              flex: 1,
+              backgroundColor: TRADE_COLORS[t]?.bar ?? "#888780",
+            }}
           />
         ))}
       </div>
 
       {/* Content area */}
-      <div className={`relative flex-1 ${padding}`}>
+      <div
+        style={{
+          position: "relative",
+          flex: 1,
+          padding: paddingPx,
+        }}
+      >
         {/* Top-left row: icons + type chip */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center" style={{ gap: 5 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             {shown.map((t, i) => {
-              const Icon = TRADE_COLORS[t].icon;
+              const Icon = TRADE_COLORS[t]?.icon;
+              if (!Icon) return null;
               return (
                 <Icon
                   key={`${t}-icon-${i}`}
-                  size={iconSize}
+                  size={iconSizePx}
                   strokeWidth={2}
                   style={{ color: TRADE_COLORS[t].text }}
                   aria-hidden
@@ -92,23 +121,53 @@ export default function TradeVariant({ contractor: c, size }: Props) {
           </div>
 
           <span
-            className={`inline-flex items-center rounded-full bg-white/[0.92] text-ink-hero font-medium uppercase tracking-[0.4px] ${chipSize}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: 999,
+              backgroundColor: "rgba(255,255,255,0.92)",
+              color: "#222222",
+              fontSize: chipFontPx,
+              fontWeight: 500,
+              textTransform: "uppercase",
+              letterSpacing: "0.4px",
+              padding: `${chipPadV}px ${chipPadH}px`,
+              lineHeight: 1.2,
+            }}
           >
             {TYPE_LABEL[c.type]}
           </span>
         </div>
 
         {/* Bottom-right number hero */}
-        <div className={`absolute ${isCompact ? "bottom-2 right-2" : "bottom-[10px] right-[10px]"} flex items-baseline gap-[3px]`}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: paddingPx,
+            right: paddingPx,
+            display: "flex",
+            alignItems: "baseline",
+            gap: 3,
+          }}
+        >
           <span
-            className={`${heroNumSize} font-medium leading-none tracking-[-2px]`}
-            style={{ color: heroColor }}
+            style={{
+              color: heroColor,
+              fontSize: heroNumPx,
+              fontWeight: 500,
+              lineHeight: 1,
+              letterSpacing: "-2px",
+            }}
           >
-            {c.yearsInBusiness}
+            {yearsText}
           </span>
           <span
-            className={`${heroYrsSize} font-medium opacity-55`}
-            style={{ color: heroColor }}
+            style={{
+              color: heroColor,
+              fontSize: heroYrsPx,
+              fontWeight: 500,
+              opacity: 0.55,
+            }}
           >
             yrs
           </span>
@@ -123,7 +182,7 @@ export function tradeSubtitle(
   size: CardSize
 ): string {
   const trades = cardTradeOrder(c.classifications, c.type);
-  const labels = trades.map((t: TradeSlug) => TRADE_COLORS[t].label);
+  const labels = trades.map((t: TradeSlug) => TRADE_COLORS[t]?.label ?? "—");
 
   if (c.type === "specialist") return labels[0] ?? "—";
 
@@ -135,6 +194,7 @@ export function tradeSubtitle(
   }
 
   // Skilled
+  if (labels.length === 0) return "—";
   if (labels.length <= 3) return labels.join(" · ");
   const remaining = labels.length - 2;
   const compact = `${labels[0]} · ${labels[1]} + ${remaining} more`;

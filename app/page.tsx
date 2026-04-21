@@ -44,12 +44,22 @@ export default function HomePage() {
   // render the filtered main grid. Sections only show when browsing "All".
   const showSections = active === "all";
 
+  // Trade-specific sections (plumbers, electricians) exclude Generalists
+  // entirely — a B-license holder with C-36 as a secondary classification
+  // doesn't belong in "Established plumbers". Generalists surface via the
+  // "Fully insured" section and the main grid instead.
   const plumbingSection = useMemo(
-    () => sortByYearsDesc(byPrimary(MOCK_CONTRACTORS, "plumbing")).slice(0, 8),
+    () =>
+      sortByYearsDesc(
+        byPrimary(MOCK_CONTRACTORS, "plumbing", { primaryTradeOnly: true })
+      ).slice(0, 8),
     []
   );
   const electricalSection = useMemo(
-    () => sortByYearsDesc(byPrimary(MOCK_CONTRACTORS, "electrical")).slice(0, 8),
+    () =>
+      sortByYearsDesc(
+        byPrimary(MOCK_CONTRACTORS, "electrical", { primaryTradeOnly: true })
+      ).slice(0, 8),
     []
   );
   const insuredSection = useMemo(
@@ -110,23 +120,27 @@ export default function HomePage() {
               title={`Established plumbers in ${CITY}`}
               contractors={plumbingSection}
               seeAllHref="/search?trade=plumbing&sort=yearsDesc"
+              variant="trade"
             />
             <ContractorSection
               title={`Fully insured contractors in ${CITY}`}
               subtitle="Workers' comp and bond on file"
               contractors={insuredSection}
               seeAllHref="/search?insured=1&sort=yearsDesc"
+              variant="license"
             />
             <ContractorSection
               title={`Top electricians in ${CITY}`}
               contractors={electricalSection}
               seeAllHref="/search?trade=electrical&sort=yearsDesc"
+              variant="trade"
             />
             <ContractorSection
               title={`Newly licensed in ${CITY}`}
               subtitle="Recent additions to the CSLB registry"
               contractors={newlyLicensedSection}
               seeAllHref="/search?sort=newestFirst"
+              variant="license"
             />
           </div>
         </section>
@@ -164,8 +178,25 @@ export default function HomePage() {
   );
 }
 
-function byPrimary(list: MockContractor[], trade: string): MockContractor[] {
-  return list.filter((c) => c.primaryTrade === trade);
+interface PrimaryFilterOpts {
+  /**
+   * When true, Generalists (B-license holders) are excluded even if their
+   * derived `primaryTrade` happens to match — they belong in cross-trade
+   * sections like "Fully insured", not trade-specific ones.
+   */
+  primaryTradeOnly?: boolean;
+}
+
+function byPrimary(
+  list: MockContractor[],
+  trade: string,
+  opts: PrimaryFilterOpts = {}
+): MockContractor[] {
+  return list.filter((c) => {
+    if (c.primaryTrade !== trade) return false;
+    if (opts.primaryTradeOnly && c.type === "generalist") return false;
+    return true;
+  });
 }
 
 function sortByYearsDesc(list: MockContractor[]): MockContractor[] {
