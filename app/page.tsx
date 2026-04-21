@@ -77,9 +77,21 @@ export default function HomePage() {
       .slice(0, 8);
   }, []);
 
+  // Category-filtered main grid.
+  //   - "General" tab  → all Generalists (B-license holders). Their
+  //     `primaryTrade` is the first C-class, never "general", so we can't
+  //     filter by that field here.
+  //   - Trade tabs     → Specialists + Skilled whose primary maps to the
+  //     trade. Generalists are excluded even if a secondary C-class would
+  //     otherwise match — they belong in the "General" tab, not "Plumbers".
   const mainGrid = useMemo(() => {
     if (active === "all") return MOCK_CONTRACTORS;
-    return MOCK_CONTRACTORS.filter((c) => c.primaryTrade === active);
+    if (active === "general") {
+      return MOCK_CONTRACTORS.filter((c) => c.type === "generalist");
+    }
+    return MOCK_CONTRACTORS.filter(
+      (c) => c.primaryTrade === active && c.type !== "generalist"
+    );
   }, [active]);
 
   return (
