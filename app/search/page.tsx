@@ -24,6 +24,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const county = asString(sp.county);
   const primaryTrade = asString(sp.primaryTrade);
   const activeOnly = asString(sp.active) !== "0";
+  const minYears = parsePositiveInt(asString(sp.minYears));
 
   return (
     <Suspense fallback={null}>
@@ -35,9 +36,17 @@ export default async function SearchPage({ searchParams }: PageProps) {
         county={county}
         primaryTrade={primaryTrade}
         activeOnly={activeOnly}
+        minYears={minYears}
       />
     </Suspense>
   );
+}
+
+/** Parse a "?minYears=20" style param; returns undefined unless it's a positive integer. */
+function parsePositiveInt(v: string | undefined): number | undefined {
+  if (!v) return undefined;
+  const n = Number.parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
 interface LoaderProps {
@@ -48,6 +57,7 @@ interface LoaderProps {
   county?: string;
   primaryTrade?: string;
   activeOnly: boolean;
+  minYears?: number;
 }
 
 async function SearchLoader(props: LoaderProps) {
@@ -59,6 +69,7 @@ async function SearchLoader(props: LoaderProps) {
       county: props.county,
       primaryTrade: props.primaryTrade,
       activeOnly: props.activeOnly,
+      minYears: props.minYears,
     });
     listings = toListings(rows);
   } catch (err) {

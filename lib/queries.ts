@@ -12,6 +12,8 @@ export interface SearchParams {
   county?: string;
   primaryTrade?: string;
   activeOnly?: boolean;
+  /** Minimum years in business. Ignored unless a positive integer. */
+  minYears?: number;
   limit?: number;
 }
 
@@ -38,6 +40,7 @@ export async function searchContractors(
     county,
     primaryTrade,
     activeOnly = true,
+    minYears,
     limit = 60,
   } = params;
 
@@ -50,6 +53,9 @@ export async function searchContractors(
   if (activeOnly) query = query.eq("is_active", true);
   if (county) query = query.eq("county", county);
   if (primaryTrade) query = query.eq("primary_trade", primaryTrade);
+  if (typeof minYears === "number" && Number.isFinite(minYears) && minYears > 0) {
+    query = query.gte("years_in_business", minYears);
+  }
 
   if (location && location.trim()) {
     const loc = escapeOrValue(location.trim());
