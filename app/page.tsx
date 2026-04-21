@@ -158,11 +158,11 @@ export default function HomePage() {
             <EmptyState activeLabel={labelFor(active)} />
           ) : (
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {mainGrid.map((c, i) => (
+              {mainGrid.map((c) => (
                 <ContractorCard
                   key={c.licenseNumber}
                   contractor={c}
-                  variant={i % 2 === 0 ? "license" : "trade"}
+                  variant="trade"
                   size="default"
                 />
               ))}
