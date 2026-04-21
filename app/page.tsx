@@ -86,7 +86,7 @@ export default function HomePage() {
     <div className="bg-white">
       {/* Category strip — sticky directly under the nav */}
       <section className="sticky top-16 z-30 bg-white border-b border-line-subtle">
-        <div className="page-container">
+        <div className="page-container py-3">
           <CategoryStrip active={active} onChange={onCategoryChange} />
         </div>
       </section>
