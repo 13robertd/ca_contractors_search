@@ -16,9 +16,6 @@ const VALID_CATEGORIES = new Set(CATEGORIES.map((c) => c.id));
 /** Hardcoded for this pass — city switcher is out of scope. */
 const CITY = "San Mateo";
 
-/** "Newly licensed" window: last 24 months from today. */
-const NEWLY_LICENSED_WINDOW_MS = 24 * 30 * 24 * 60 * 60 * 1000;
-
 export default function HomePage() {
   const router = useRouter();
   const [active, setActive] = useState<CategoryId>("all");
@@ -44,10 +41,9 @@ export default function HomePage() {
   // render the filtered main grid. Sections only show when browsing "All".
   const showSections = active === "all";
 
-  // Trade-specific sections (plumbers, electricians) exclude Generalists
-  // entirely — a B-license holder with C-36 as a secondary classification
-  // doesn't belong in "Established plumbers". Generalists surface via the
-  // "Fully insured" section and the main grid instead.
+  // Trade-specific section excludes Generalists — a B-license holder with
+  // C-36 as a secondary classification doesn't belong in "Established
+  // Plumbing". They surface in the Generalists section instead.
   const plumbingSection = useMemo(
     () =>
       sortByYearsDesc(
@@ -55,30 +51,13 @@ export default function HomePage() {
       ).slice(0, 8),
     []
   );
-  const electricalSection = useMemo(
+  const generalSection = useMemo(
     () =>
       sortByYearsDesc(
-        byPrimary(MOCK_CONTRACTORS, "electrical", { primaryTradeOnly: true })
+        MOCK_CONTRACTORS.filter((c) => c.type === "generalist")
       ).slice(0, 8),
     []
   );
-  const insuredSection = useMemo(
-    () =>
-      sortByYearsDesc(
-        MOCK_CONTRACTORS.filter(
-          (c) => c.status === "active" && c.bonded && c.workersComp
-        )
-      ).slice(0, 8),
-    []
-  );
-  const newlyLicensedSection = useMemo(() => {
-    const cutoff = Date.now() - NEWLY_LICENSED_WINDOW_MS;
-    return MOCK_CONTRACTORS.filter(
-      (c) => c.status === "active" && Date.parse(c.issueDate) >= cutoff
-    )
-      .sort((a, b) => Date.parse(b.issueDate) - Date.parse(a.issueDate))
-      .slice(0, 8);
-  }, []);
 
   const mainGrid = useMemo(() => {
     if (active === "all") return MOCK_CONTRACTORS;
@@ -117,30 +96,16 @@ export default function HomePage() {
         <section>
           <div className="page-container">
             <ContractorSection
-              title={`Established plumbers in ${CITY}`}
+              title={`Established Plumbing In ${CITY}`}
               contractors={plumbingSection}
               seeAllHref="/search?trade=plumbing&sort=yearsDesc"
               variant="trade"
             />
             <ContractorSection
-              title={`Fully insured contractors in ${CITY}`}
-              subtitle="Workers' comp and bond on file"
-              contractors={insuredSection}
-              seeAllHref="/search?insured=1&sort=yearsDesc"
-              variant="license"
-            />
-            <ContractorSection
-              title={`Top electricians in ${CITY}`}
-              contractors={electricalSection}
-              seeAllHref="/search?trade=electrical&sort=yearsDesc"
+              title={`Established General Contractors in ${CITY}`}
+              contractors={generalSection}
+              seeAllHref="/search?trade=general&sort=yearsDesc"
               variant="trade"
-            />
-            <ContractorSection
-              title={`Newly licensed in ${CITY}`}
-              subtitle="Recent additions to the CSLB registry"
-              contractors={newlyLicensedSection}
-              seeAllHref="/search?sort=newestFirst"
-              variant="license"
             />
           </div>
         </section>
