@@ -2,6 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
+
+/**
+ * /search sticky search bar. Matches the home page's <HomeSearchBar />
+ * design language exactly — pill shape, segment labels on top of values,
+ * hairline dividers, crimson circular button — adapted for 4 segments
+ * (Where / Service / When / Keyword).
+ */
+
+type SegmentId = "location" | "service" | "when" | "keyword";
 
 interface Props {
   initialLocation?: string;
@@ -31,6 +41,7 @@ export default function MarketplaceSearchBar({
   const [trade, setTrade] = useState(initialTrade);
   const [keyword, setKeyword] = useState(initialKeyword);
   const [when, setWhen] = useState(initialWhen);
+  const [hovered, setHovered] = useState<SegmentId | null>(null);
 
   function submit(e?: React.FormEvent) {
     e?.preventDefault();
@@ -47,65 +58,87 @@ export default function MarketplaceSearchBar({
   return (
     <form
       onSubmit={submit}
-      className="w-full"
       role="search"
       aria-label="Find contractors"
+      className="w-full"
     >
-      <div className="flex items-stretch gap-2 rounded-full border border-line bg-white shadow-card pl-2 pr-2 py-1.5">
-        <Field
+      {/* Pill search bar — same token set as HomeSearchBar */}
+      <div
+        onMouseLeave={() => setHovered(null)}
+        className="relative flex items-center h-14 rounded-full bg-white border border-line-subtle shadow-search-expanded"
+      >
+        <Segment
+          id="location"
           label="Where"
-          icon={<PinIcon />}
+          placeholder="City or ZIP"
           value={location}
           onChange={setLocation}
-          placeholder="City or ZIP"
+          hovered={hovered}
+          onHover={setHovered}
+          rounded="left"
         />
-        <Divider />
-        <Field
+
+        <Divider hovered={hovered} between={["location", "service"]} />
+
+        <Segment
+          id="service"
           label="Service"
-          icon={<ToolIcon />}
+          placeholder="Plumber, roofer…"
           value={trade}
           onChange={setTrade}
-          placeholder="Plumber, roofer…"
+          hovered={hovered}
+          onHover={setHovered}
         />
-        <Divider />
-        <SelectField
+
+        <Divider hovered={hovered} between={["service", "when"]} />
+
+        <SelectSegment
+          id="when"
           label="When"
-          icon={<CalendarIcon />}
           value={when}
           onChange={setWhen}
           options={WHEN_OPTIONS}
+          hovered={hovered}
+          onHover={setHovered}
         />
-        <Divider />
-        <Field
+
+        <Divider hovered={hovered} between={["when", "keyword"]} />
+
+        <Segment
+          id="keyword"
           label="Keyword"
-          icon={<SearchIcon />}
+          placeholder="Bond, solar…"
           value={keyword}
           onChange={setKeyword}
-          placeholder="Bond, solar…"
-          className="hidden md:flex"
+          hovered={hovered}
+          onHover={setHovered}
+          rounded="right"
+          paddingRight="pr-2"
         />
 
-        <button
-          type="submit"
-          aria-label="Search"
-          disabled={pending}
-          className="ml-auto inline-flex items-center gap-2 self-stretch px-5 rounded-full bg-fixd text-white text-sm font-medium hover:bg-fixd-hover transition-colors shadow-sm disabled:opacity-60"
-        >
-          <SearchIcon />
-          <span className="hidden sm:inline">Search</span>
-        </button>
+        <div className="pr-2">
+          <button
+            type="submit"
+            disabled={pending}
+            aria-label="Search"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-brand hover:bg-brand-hover text-white transition-colors focus-brand disabled:opacity-60"
+          >
+            <Search size={16} strokeWidth={2.5} />
+          </button>
+        </div>
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-ink-soft">
+      {/* Secondary row — Filters button matches nav "Saved" link styling */}
+      <div className="mt-3 flex items-center justify-between gap-2">
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 px-3 h-8 rounded-full border border-line bg-white hover:bg-surface-subtle text-ink transition-colors"
           aria-label="Open filters"
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-line-subtle bg-white hover:bg-surface-subtle text-[13px] font-medium text-ink-hero transition-colors focus-brand"
         >
-          <FiltersIcon />
+          <SlidersHorizontal size={14} strokeWidth={2} aria-hidden />
           Filters
         </button>
-        <span className="hidden sm:inline">
+        <span className="hidden sm:inline text-[13px] text-ink-secondary">
           Showing licensed and verified contractors near you
         </span>
       </div>
@@ -113,126 +146,123 @@ export default function MarketplaceSearchBar({
   );
 }
 
-/* ------------ inline subcomponents ------------ */
+/* ---------- Segments ---------- */
 
-function Field({
+interface BaseSegmentProps {
+  id: SegmentId;
+  label: string;
+  hovered: SegmentId | null;
+  onHover: (v: SegmentId | null) => void;
+  rounded?: "left" | "right";
+  paddingRight?: string;
+}
+
+function Segment({
+  id,
   label,
-  icon,
+  placeholder,
   value,
   onChange,
-  placeholder,
-  className = "",
-}: {
-  label: string;
-  icon: React.ReactNode;
+  hovered,
+  onHover,
+  rounded,
+  paddingRight,
+}: BaseSegmentProps & {
+  placeholder?: string;
   value: string;
   onChange: (v: string) => void;
-  placeholder?: string;
-  className?: string;
 }) {
+  const { rounding, bg, dim } = segmentState(id, hovered, rounded);
+
   return (
     <label
-      className={`group flex-1 min-w-0 flex items-center gap-2 px-3 rounded-full hover:bg-surface-subtle transition-colors cursor-text ${className}`}
+      onMouseEnter={() => onHover(id)}
+      className={`group flex-1 min-w-0 h-full flex flex-col justify-center cursor-text px-5 ${
+        paddingRight ?? ""
+      } ${rounding} transition-colors ${bg} ${dim}`}
     >
-      <span className="text-ink-soft shrink-0">{icon}</span>
-      <span className="flex flex-col min-w-0 py-1">
-        <span className="text-[10px] uppercase tracking-wide font-semibold text-ink-soft">
-          {label}
-        </span>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full bg-transparent border-0 p-0 text-sm text-ink placeholder:text-ink-soft focus:outline-none"
-        />
-      </span>
+      <span className="text-[11px] font-medium text-ink-hero">{label}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-0.5 w-full bg-transparent border-0 outline-none text-[13px] text-ink-hero placeholder:text-ink-tertiary"
+      />
     </label>
   );
 }
 
-function SelectField({
+function SelectSegment({
+  id,
   label,
-  icon,
   value,
   onChange,
   options,
-}: {
-  label: string;
-  icon: React.ReactNode;
+  hovered,
+  onHover,
+  rounded,
+}: BaseSegmentProps & {
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
 }) {
+  const { rounding, bg, dim } = segmentState(id, hovered, rounded);
+
   return (
-    <label className="group flex-1 min-w-0 flex items-center gap-2 px-3 rounded-full hover:bg-surface-subtle transition-colors cursor-pointer">
-      <span className="text-ink-soft shrink-0">{icon}</span>
-      <span className="flex flex-col min-w-0 py-1">
-        <span className="text-[10px] uppercase tracking-wide font-semibold text-ink-soft">
-          {label}
-        </span>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent border-0 p-0 text-sm text-ink focus:outline-none cursor-pointer"
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </span>
+    <label
+      onMouseEnter={() => onHover(id)}
+      className={`group flex-1 min-w-0 h-full flex flex-col justify-center cursor-pointer px-5 ${rounding} transition-colors ${bg} ${dim}`}
+    >
+      <span className="text-[11px] font-medium text-ink-hero">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-0.5 w-full bg-transparent border-0 outline-none text-[13px] text-ink-hero cursor-pointer appearance-none"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
 
-function Divider() {
-  return <span aria-hidden className="self-center w-px h-7 bg-line" />;
+function segmentState(
+  id: SegmentId,
+  hovered: SegmentId | null,
+  rounded?: "left" | "right"
+) {
+  const isHovered = hovered === id;
+  const isDimmed = hovered !== null && hovered !== id;
+  return {
+    rounding:
+      rounded === "left"
+        ? "rounded-l-full"
+        : rounded === "right"
+        ? "rounded-r-full"
+        : "",
+    bg: isHovered ? "bg-surface-subtle" : "",
+    dim: isDimmed ? "opacity-60" : "",
+  };
 }
 
-/* ------------ icons ------------ */
-
-function PinIcon() {
+function Divider({
+  hovered,
+  between,
+}: {
+  hovered: SegmentId | null;
+  between: [SegmentId, SegmentId];
+}) {
+  const touchesHover = hovered !== null && between.includes(hovered);
   return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-      <path
-        fillRule="evenodd"
-        d="M10 18s6-5.5 6-10a6 6 0 1 0-12 0c0 4.5 6 10 6 10Zm0-8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-function ToolIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-      <path d="M14.7 2.3a3 3 0 0 0-4.05 3.95l-7.4 7.4a1.5 1.5 0 1 0 2.12 2.12l7.4-7.4A3 3 0 0 0 17.7 5.3l-2 2-1.4-1.4 2-2Z" />
-    </svg>
-  );
-}
-function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-      <path d="M6 2a1 1 0 0 1 1 1v1h6V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm10 6H4v8h12V8Z" />
-    </svg>
-  );
-}
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-      <path
-        fillRule="evenodd"
-        d="M9 2a7 7 0 1 0 4.192 12.606l3.101 3.1a1 1 0 0 0 1.414-1.414l-3.1-3.1A7 7 0 0 0 9 2Zm-5 7a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-function FiltersIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
-      <path d="M3 5h14a1 1 0 1 1 0 2H3a1 1 0 1 1 0-2Zm3 4h8a1 1 0 1 1 0 2H6a1 1 0 1 1 0-2Zm3 4h2a1 1 0 1 1 0 2H9a1 1 0 1 1 0-2Z" />
-    </svg>
+    <span
+      aria-hidden
+      className={`h-8 w-px bg-line-subtle transition-opacity ${
+        touchesHover ? "opacity-0" : "opacity-100"
+      }`}
+    />
   );
 }

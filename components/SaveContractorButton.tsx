@@ -38,6 +38,8 @@ export default function SaveContractorButton({
   const active = mounted && saved;
 
   if (variant === "icon") {
+    // Matches the home page's 32×32 circle-icon-button pattern (the nav
+    // menu button) — white surface, line-subtle border, brand-red on saved.
     return (
       <button
         type="button"
@@ -45,7 +47,11 @@ export default function SaveContractorButton({
         aria-pressed={active}
         aria-label={active ? "Unsave contractor" : "Save contractor"}
         title={active ? "Saved" : "Save"}
-        className={`btn-icon ${active ? "!border-ink !bg-ink !text-white hover:!bg-fixd-hover" : ""} ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-brand ${
+          active
+            ? "bg-brand border border-brand text-white hover:bg-brand-hover"
+            : "bg-white border border-line-subtle text-ink-hero hover:bg-surface-subtle"
+        } ${className}`}
       >
         <BookmarkIcon filled={active} />
       </button>

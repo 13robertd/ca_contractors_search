@@ -28,8 +28,8 @@ type MobileView = "list" | "map";
  *   - "search as I move" toggle (defaults on; off freezes bounds)
  *   - mobile list/map toggle
  *
- * The page-level Server Component only fetches data; all interactivity lives
- * here so we never serialize handlers across the RSC boundary.
+ * Surface tokens are aligned with the home page: white page background,
+ * line-subtle borders, ink-hero/ink-secondary typography.
  */
 export default function SearchExperience({ listings, initial }: Props) {
   const [bounds, setBounds] = useState<Bounds | null>(null);
@@ -38,14 +38,6 @@ export default function SearchExperience({ listings, initial }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<MobileView>("list");
 
-  // --- bounds-driven filtering -------------------------------------------------
-  // A listing is "in this map area" when:
-  //   1. It has resolved coordinates (DB doesn't yet store these, so missing is
-  //      possible — those listings never appear on the map but stay in the
-  //      "all" total to be honest about hidden inventory).
-  //   2. Its coordinates fall inside the current map bounds.
-  // When bounds aren't known yet (first paint, no Mapbox token) we show all
-  // geo-resolved listings so the page is useful even without a map.
   const visibleListings = useMemo(() => {
     return listings.filter((l) => {
       if (l.latitude == null || l.longitude == null) return false;
@@ -73,10 +65,10 @@ export default function SearchExperience({ listings, initial }: Props) {
   const noGeoData = listings.every((l) => l.latitude == null);
 
   return (
-    <div className="bg-surface-subtle min-h-[calc(100vh-3.5rem)] border-t border-line">
+    <div className="bg-white min-h-[calc(100vh-4rem)]">
       {/* Sticky search/filter bar */}
-      <div className="sticky top-14 z-20 bg-white/95 backdrop-blur border-b border-line">
-        <div className="page-container py-3">
+      <div className="sticky top-16 z-20 bg-white/95 backdrop-blur border-b border-line-subtle">
+        <div className="page-container py-4">
           <MarketplaceSearchBar
             initialLocation={initial.location}
             initialTrade={initial.trade}
@@ -86,7 +78,7 @@ export default function SearchExperience({ listings, initial }: Props) {
         </div>
 
         {/* Mobile list/map toggle */}
-        <div className="lg:hidden border-t border-line">
+        <div className="lg:hidden border-t border-line-subtle">
           <div className="page-container py-2 flex items-center gap-2">
             <ToggleButton
               active={mobileView === "list"}
@@ -100,7 +92,7 @@ export default function SearchExperience({ listings, initial }: Props) {
             >
               Map
             </ToggleButton>
-            <span className="ml-auto text-xs text-ink-muted tabular-nums">
+            <span className="ml-auto text-[13px] text-ink-secondary tabular-nums">
               {visibleListings.length} in view
             </span>
           </div>
@@ -114,7 +106,7 @@ export default function SearchExperience({ listings, initial }: Props) {
           aria-label="Contractor results"
           className={`${
             mobileView === "list" ? "block" : "hidden"
-          } lg:block px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto lg:max-h-[calc(100vh-3.5rem-72px)]`}
+          } lg:block px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto lg:max-h-[calc(100vh-4rem-108px)]`}
         >
           <ResultsHeader
             visibleCount={visibleListings.length}
@@ -129,7 +121,7 @@ export default function SearchExperience({ listings, initial }: Props) {
           />
 
           {noGeoData ? (
-            <p className="mt-6 text-xs text-ink-soft">
+            <p className="mt-6 text-[13px] text-ink-tertiary">
               Note: contractor coordinates are derived from city; precise
               addresses will land once geocoding is wired to the database.
             </p>
@@ -140,11 +132,12 @@ export default function SearchExperience({ listings, initial }: Props) {
         <aside
           className={`${
             mobileView === "map" ? "block" : "hidden"
-          } lg:block lg:sticky lg:top-[calc(3.5rem+72px)] self-start`}
+          } lg:block lg:sticky lg:top-[calc(4rem+108px)] self-start`}
           aria-label="Contractor map"
         >
-          <div className="relative h-[calc(100vh-3.5rem-72px)] lg:rounded-none p-0 lg:p-3">
-            <div className="relative h-full">
+          <div className="relative h-[calc(100vh-4rem-108px)] p-0 lg:p-4">
+            {/* Map gets card language: 12px radius + subtle border */}
+            <div className="relative h-full overflow-hidden rounded-none lg:rounded-[12px] lg:border lg:border-line-subtle bg-surface-subtle">
               <ContractorMap
                 listings={listings}
                 highlightedId={highlightedId}
@@ -156,7 +149,7 @@ export default function SearchExperience({ listings, initial }: Props) {
               />
               {visibleListings.length === 0 && bounds ? (
                 <div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex justify-center">
-                  <div className="pointer-events-auto inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/95 backdrop-blur border border-line shadow-card text-xs text-ink-muted">
+                  <div className="pointer-events-auto inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-line-subtle shadow-card text-[13px] text-ink-secondary">
                     Map results will appear as location data becomes available.
                   </div>
                 </div>
@@ -187,10 +180,10 @@ function ToggleButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center justify-center h-8 px-4 rounded-full text-xs font-medium transition-colors ${
+      className={`inline-flex items-center justify-center h-8 px-4 rounded-full text-[13px] font-medium transition-colors focus-brand ${
         active
-          ? "bg-ink text-white"
-          : "bg-white border border-line text-ink hover:bg-surface-subtle"
+          ? "bg-ink-hero text-white"
+          : "bg-white border border-line-subtle text-ink-hero hover:bg-surface-subtle"
       }`}
     >
       {children}

@@ -30,9 +30,11 @@ export default function ContractorList({
 
   if (listings.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-white p-10 text-center">
-        <h2 className="text-h3 text-ink">No contractors in this map area</h2>
-        <p className="mt-1.5 text-sm text-ink-muted">
+      <div className="rounded-[12px] border border-line-subtle bg-white p-10 text-center">
+        <h2 className="text-[18px] font-medium text-ink-hero tracking-[-0.2px]">
+          No contractors in this map area
+        </h2>
+        <p className="mt-1.5 text-[14px] text-ink-secondary">
           Try zooming out or panning the map to find more results.
         </p>
       </div>

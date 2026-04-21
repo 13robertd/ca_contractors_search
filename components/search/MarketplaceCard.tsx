@@ -16,6 +16,16 @@ interface Props {
 
 const CLASSIFICATION_PREVIEW = 4;
 
+/**
+ * Search results card. Visual tokens are aligned with the home page:
+ *   - 12px radius, subtle line-subtle border, no shadow at rest
+ *   - Title: 15px / 500 / ink-hero (homepage card title scale)
+ *   - Subtitle: 13px / ink-secondary
+ *   - Stat labels: 10px / uppercase / tracking-0.8px / ink-tertiary
+ *   - Stat values: 14px / 500 / ink-hero
+ *   - Hover: border darkens only (home pattern — no heavy shadows)
+ *   - Focus/highlight: crimson brand ring (focus-brand token)
+ */
 export default function MarketplaceCard({
   listing: l,
   isHighlighted,
@@ -29,38 +39,42 @@ export default function MarketplaceCard({
       onMouseLeave={() => onHover?.(null)}
       onFocus={() => onHover?.(l.license_number)}
       onBlur={() => onHover?.(null)}
-      className={`group relative bg-white rounded-lg border shadow-card transition-all duration-150 ${
+      className={`group relative rounded-[12px] bg-white transition-colors duration-150 ${
         isHighlighted
-          ? "border-ink shadow-card-hover -translate-y-0.5"
-          : "border-line hover:border-line-strong hover:shadow-card-hover"
+          ? "border border-brand ring-1 ring-brand/20"
+          : "border border-line-subtle hover:border-line-strong"
       }`}
     >
-      {/* Full-card click target sits behind the interactive controls */}
+      {/* Full-card click target behind interactive controls */}
       <Link
         href={href}
         aria-label={`Open ${l.business_name} details`}
-        className="absolute inset-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        className="absolute inset-0 rounded-[12px] focus-brand"
       />
 
       <div className="relative p-5 flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="text-h3 text-ink truncate group-hover:underline underline-offset-2 decoration-ink/30">
+            <h3 className="text-[15px] font-medium text-ink-hero truncate">
               {l.business_name}
             </h3>
-            <p className="mt-0.5 text-sm text-ink-muted truncate">
+            <p className="mt-0.5 text-[13px] text-ink-secondary truncate">
               {l.primary_trade || "General contractor"}
               {l.distanceLabel ? <> · <span>{l.distanceLabel}</span></> : null}
             </p>
           </div>
           <div className="flex items-start gap-2 shrink-0 relative z-10">
             <StatusBadge contractor={l} />
-            <SaveContractorButton licenseNumber={l.license_number} variant="icon" />
+            <SaveContractorButton
+              licenseNumber={l.license_number}
+              variant="icon"
+            />
           </div>
         </div>
 
-        {/* Trust row */}
+        {/* Trust row — semantic badges (badge-positive / badge-warning etc.
+            are already the site-wide trust-signal tokens). */}
         <TrustBadgeRow contractor={l} />
 
         {/* Classifications (licenses held) */}
@@ -73,7 +87,7 @@ export default function MarketplaceCard({
         ) : null}
 
         {/* Stats */}
-        <dl className="grid grid-cols-3 gap-4 text-sm pt-1">
+        <dl className="grid grid-cols-3 gap-4 pt-1">
           <Stat label="Years" value={formatYears(l.years_in_business)} />
           <Stat label="License" value={l.license_number} mono />
           <Stat
@@ -82,7 +96,7 @@ export default function MarketplaceCard({
               l.phone ? (
                 <a
                   href={`tel:${l.phone}`}
-                  className="relative z-10 hover:text-ink"
+                  className="relative z-10 hover:text-brand transition-colors"
                 >
                   {formatPhone(l.phone)}
                 </a>
@@ -108,11 +122,11 @@ function Stat({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] uppercase tracking-wide font-medium text-ink-soft">
+      <dt className="text-[10px] uppercase tracking-[0.8px] font-medium text-ink-tertiary">
         {label}
       </dt>
       <dd
-        className={`mt-0.5 text-sm text-ink font-medium truncate ${
+        className={`mt-1 text-[14px] text-ink-hero font-medium truncate ${
           mono ? "tabular-nums" : ""
         }`}
       >
