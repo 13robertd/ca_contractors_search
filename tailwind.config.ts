@@ -16,24 +16,41 @@ const config: Config = {
       colors: {
         // Surfaces & text
         ink: {
-          DEFAULT: "#0B0F14", // near-black, primary text
-          muted: "#4B5563",   // secondary text
-          soft: "#6B7280",    // tertiary text / helper
+          DEFAULT: "#0B0F14", // near-black, primary text on /search, /saved, /detail
+          hero:    "#222222", // homepage spec — #222 primary
+          muted:   "#4B5563", // secondary text
+          secondary: "#6A6A6A", // homepage spec — #6A6A6A
+          soft:    "#6B7280", // tertiary text / helper
+          tertiary: "#B0B0B0", // homepage spec — #B0B0B0
         },
         surface: {
           DEFAULT: "#FFFFFF", // primary background
-          subtle: "#F7F7F8",  // secondary background / section
+          subtle: "#F7F7F8",  // secondary background / section separators
           sunk: "#F1F2F4",    // input background on dark cards
         },
         line: {
           DEFAULT: "#E4E4E7", // default border
           strong: "#D4D4D8",  // heavier divider
+          subtle: "#E5E5E5",  // homepage spec border
         },
-        // Brand — intentionally understated (utility-first, not playful)
+        // Homepage brand — crimson. Reserved for the wordmark, primary CTA,
+        // the search button, active category underline, and filled-heart save.
+        brand: {
+          DEFAULT: "#B91C1C", // primary crimson
+          hover:   "#9F1818",
+          50:  "#FBECEC",     // lightest tint, badge backgrounds
+          100: "#FECACA",     // mid tint, hover surfaces
+          900: "#5A0E0E",     // darkest, text on brand-50 fills
+        },
+        // License-card credential tile palette
+        credential: {
+          DEFAULT: "#1E1B1A", // near-black with hint of warmth
+        },
+        // Legacy Fixd neutral brand — kept so /search + /saved keep their Linear/Stripe feel
         fixd: {
-          DEFAULT: "#0B0F14", // primary = near-black for a Stripe/Linear feel
+          DEFAULT: "#0B0F14",
           hover: "#1F2937",
-          accent: "#0F9D58",  // green used sparingly as confirm/CTA accent
+          accent: "#0F9D58",
         },
         // Semantic (used inside badges/pills, not on large surfaces)
         positive: {
@@ -78,6 +95,8 @@ const config: Config = {
         card:      "0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)",
         "card-hover": "0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04)",
         pop:       "0 8px 24px rgba(15, 23, 42, 0.12)",
+        // Homepage search bar expanded state — spec: 0 6px 16px rgba(0,0,0,0.12)
+        "search-expanded": "0 6px 16px rgba(0, 0, 0, 0.12)",
       },
       maxWidth: {
         page: "1200px",

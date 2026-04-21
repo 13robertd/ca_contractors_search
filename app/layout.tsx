@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import Link from "next/link";
 import "./globals.css";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -54,48 +55,3 @@ export default function RootLayout({
   );
 }
 
-function SiteHeader() {
-  return (
-    <header className="sticky top-0 z-30 border-b border-line bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/70">
-      <div className="page-container h-14 flex items-center justify-between">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-[17px] font-semibold tracking-tight text-ink"
-          aria-label="Fixd home"
-        >
-          <span
-            aria-hidden
-            className="inline-block h-5 w-5 rounded-[5px] bg-ink"
-          />
-          <span>Fixd</span>
-        </Link>
-
-        <nav className="flex items-center gap-1 text-sm">
-          <Link
-            href="/search"
-            className="px-3 py-2 rounded-md text-ink-muted hover:text-ink hover:bg-surface-subtle transition-colors"
-          >
-            Search
-          </Link>
-          <Link
-            href="/saved"
-            className="px-3 py-2 rounded-md text-ink-muted hover:text-ink hover:bg-surface-subtle transition-colors"
-          >
-            Saved
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
-}
-
-function SiteFooter() {
-  return (
-    <footer className="border-t border-line bg-white">
-      <div className="page-container py-6 text-xs text-ink-soft flex flex-wrap items-center justify-between gap-2">
-        <span>© Fixd</span>
-        <span>Licensing data sourced from public records. Verify before hiring.</span>
-      </div>
-    </footer>
-  );
-}

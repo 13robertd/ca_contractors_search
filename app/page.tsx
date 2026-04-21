@@ -1,136 +1,103 @@
-import Link from "next/link";
-import SearchBar from "@/components/SearchBar";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import ContractorCard from "@/components/home/ContractorCard";
+import CategoryStrip, {
+  CATEGORIES,
+  type CategoryId,
+} from "@/components/home/CategoryStrip";
+import HomeSearchBar from "@/components/home/HomeSearchBar";
+import { MOCK_CONTRACTORS } from "@/lib/mockContractors";
+
+const VALID_CATEGORIES = new Set(CATEGORIES.map((c) => c.id));
 
 export default function HomePage() {
+  const router = useRouter();
+  const [active, setActive] = useState<CategoryId>("all");
+
+  // Hydrate the active category from the URL once, client-side only
+  // (avoids the Next 15 Suspense requirement of useSearchParams).
+  useEffect(() => {
+    const trade = new URLSearchParams(window.location.search).get("trade");
+    if (trade && VALID_CATEGORIES.has(trade as CategoryId)) {
+      setActive(trade as CategoryId);
+    }
+  }, []);
+
+  function onCategoryChange(id: CategoryId) {
+    setActive(id);
+    const params = new URLSearchParams(window.location.search);
+    if (id === "all") params.delete("trade");
+    else params.set("trade", id);
+    const qs = params.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+  }
+
+  const visible = useMemo(
+    () =>
+      active === "all"
+        ? MOCK_CONTRACTORS
+        : MOCK_CONTRACTORS.filter((c) => c.trade === active),
+    [active]
+  );
+
   return (
     <div className="bg-white">
-      {/* Hero */}
-      <section className="border-b border-line">
-        <div className="page-container pt-16 sm:pt-24 pb-14 sm:pb-20">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 h-6 px-2 rounded-sm border border-line bg-surface-subtle text-[11px] font-medium text-ink-muted">
-              <span className="status-dot bg-positive-500" />
-              Verified public records · Updated daily
-            </span>
-
-            <h1 className="mt-5 text-display text-ink">Fixd</h1>
-            <p className="mt-2 text-h2 text-ink">
-              Find trusted contractors near you.
-            </p>
-            <p className="mt-3 max-w-xl text-base text-ink-muted">
-              Search by location and trade. Instantly see who&apos;s licensed,
-              bonded, and ready to hire.
-            </p>
-          </div>
-
-          <div className="mt-8 max-w-3xl">
-            <SearchBar size="lg" />
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-soft">
-            <span className="text-ink-muted font-medium">Popular:</span>
-            <Link className="hover:text-ink transition-colors" href="/search?location=Los+Angeles&trade=plumbing">
-              Plumbers in Los Angeles
-            </Link>
-            <Link className="hover:text-ink transition-colors" href="/search?location=San+Diego&trade=roofing">
-              Roofers in San Diego
-            </Link>
-            <Link className="hover:text-ink transition-colors" href="/search?trade=electrical">
-              Electricians
-            </Link>
-          </div>
+      {/* 2. Category strip — sticky directly under the nav */}
+      <section className="sticky top-16 z-30 bg-white border-b border-line-subtle">
+        <div className="page-container">
+          <CategoryStrip active={active} onChange={onCategoryChange} />
         </div>
       </section>
 
-      {/* Value pillars */}
-      <section className="bg-surface-subtle border-b border-line">
-        <div className="page-container py-14 sm:py-16">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {PILLARS.map((p) => (
-              <div key={p.title} className="card p-5">
-                <div className="inline-flex items-center justify-center h-8 w-8 rounded-md bg-ink text-white text-sm">
-                  {p.glyph}
-                </div>
-                <h3 className="mt-4 text-h3 text-ink">{p.title}</h3>
-                <p className="mt-1 text-sm text-ink-muted leading-relaxed">
-                  {p.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it works strip */}
+      {/* 3. Full search bar — hero */}
       <section>
-        <div className="page-container py-14 sm:py-16">
-          <div className="grid gap-8 md:grid-cols-2 items-start">
-            <div>
-              <h2 className="text-h2 text-ink">Trust, not guesswork.</h2>
-              <p className="mt-3 text-ink-muted leading-relaxed">
-                Every contractor on Fixd is surfaced straight from public
-                license records — including active status, bond coverage,
-                workers&apos; comp, and any disciplinary history. No filler. No
-                fake reviews. Just the signals that actually matter when
-                you&apos;re about to sign a contract.
-              </p>
-              <div className="mt-6 flex items-center gap-3">
-                <Link href="/search" className="btn-primary btn-lg">
-                  Start searching
-                </Link>
-                <Link href="/saved" className="btn-ghost btn-lg">
-                  View your saved list
-                </Link>
-              </div>
-            </div>
-
-            <ul className="grid grid-cols-2 gap-3 text-sm">
-              {CHECKS.map((c) => (
-                <li key={c} className="flex items-start gap-2 text-ink-muted">
-                  <svg
-                    aria-hidden
-                    viewBox="0 0 20 20"
-                    className="mt-0.5 h-4 w-4 shrink-0 text-positive-700"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0Z"
-                    />
-                  </svg>
-                  <span className="text-ink">{c}</span>
-                </li>
-              ))}
-            </ul>
+        <div className="page-container pt-12 sm:pt-16 pb-8 sm:pb-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-h1 sm:text-display text-ink-hero">
+              Find a licensed contractor you can trust.
+            </h1>
+            <p className="mt-3 text-[15px] text-ink-secondary">
+              Every listing is verified against California CSLB public records.
+            </p>
           </div>
+
+          <div className="mt-8 max-w-3xl mx-auto">
+            <HomeSearchBar size="lg" />
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Listings grid */}
+      <section>
+        <div className="page-container pb-20">
+          {visible.length === 0 ? (
+            <EmptyState activeLabel={labelFor(active)} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {visible.map((c) => (
+                <ContractorCard key={c.licenseNumber} contractor={c} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
 }
 
-const PILLARS = [
-  {
-    glyph: "✓",
-    title: "Verified license status",
-    body: "Active, expired, and suspended licenses — straight from public records, refreshed daily.",
-  },
-  {
-    glyph: "◎",
-    title: "Trust signals up front",
-    body: "Workers' comp, contractor bond, pending suspensions, and disciplinary history, at a glance.",
-  },
-  {
-    glyph: "★",
-    title: "Save & compare",
-    body: "Shortlist candidates and compare experience, trades, and compliance side-by-side.",
-  },
-];
+function labelFor(id: CategoryId): string {
+  return CATEGORIES.find((c) => c.id === id)?.label ?? "this category";
+}
 
-const CHECKS = [
-  "Active license check",
-  "Workers' comp verified",
-  "Contractor bond on file",
-  "Disciplinary history flagged",
-  "Classification codes shown",
-  "Years in business",
-];
+function EmptyState({ activeLabel }: { activeLabel: string }) {
+  return (
+    <div className="py-24 text-center">
+      <h2 className="text-h2 text-ink-hero">No {activeLabel} to show yet.</h2>
+      <p className="mt-2 text-[14px] text-ink-secondary">
+        Try another category above, or search directly.
+      </p>
+    </div>
+  );
+}
