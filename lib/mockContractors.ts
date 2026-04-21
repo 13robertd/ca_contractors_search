@@ -1,207 +1,233 @@
 /**
- * Homepage-only mock data. Lives here so the homepage stays static/fast and
- * doesn't hit Supabase for a browsing preview. Shape is compatible with
- * the real Contractor type plus a small number of display-only fields used
- * by the License Card (issue year, neighborhood label, trade slug).
+ * Homepage mock data. Lives here so the homepage stays fast and doesn't
+ * hit Supabase for a browsing preview. Shape is compatible with the real
+ * Contractor table plus a few display-only fields. These are fictional
+ * — real contractor data comes from CSLB via Supabase.
  *
- * These are fictional. Real contractor data comes from CSLB via Supabase.
+ * Each entry's `type` and `primaryTrade` are derived at import time from
+ * `classifications` so we have a single source of truth.
+ *
+ * All mocks are in "San Mateo" because the current homepage hardcodes
+ * that city per the spec.
  */
+
+import {
+  deriveType,
+  primaryTradeFor,
+  type ContractorType,
+  type TradeSlug,
+} from "./trades";
 
 export type LicenseStatus = "active" | "expired" | "suspended";
 
-export type TradeSlug =
-  | "plumbing"
-  | "electrical"
-  | "roofing"
-  | "hvac"
-  | "painting"
-  | "general"
-  | "landscaping"
-  | "other";
-
 export interface MockContractor {
-  /** CSLB license number (string to preserve leading zeros). */
   licenseNumber: string;
   companyName: string;
   city: string;
   neighborhood?: string;
-  trade: TradeSlug;
-  /** Short classification label shown in the "CLASS" slot, e.g. "C-36 Plumbing". */
-  classificationCode: string;
-  classificationLabel: string;
+  /** CSLB classification codes in priority order. First non-B is "primary". */
+  classifications: string[];
+  /** Derived at import time — don't set this manually. */
+  type: ContractorType;
+  /** Derived at import time — don't set this manually. */
+  primaryTrade: TradeSlug;
   yearsInBusiness: number;
-  issueYear: number;
+  /** ISO "YYYY-MM-DD" for date comparisons (newly-licensed section). */
+  issueDate: string;
   status: LicenseStatus;
   bonded: boolean;
   workersComp: boolean;
-  /** Any additional compliance chips (e.g. "CFL on file"). */
+  /** Any additional compliance chips ("CFL" etc.). */
   extraTags?: string[];
 }
 
-export const MOCK_CONTRACTORS: MockContractor[] = [
-  {
-    licenseNumber: "1045287",
-    companyName: "Reliable Plumbing Co.",
-    city: "Los Angeles",
-    neighborhood: "Downtown",
-    trade: "plumbing",
-    classificationCode: "C-36",
-    classificationLabel: "C-36 Plumbing",
-    yearsInBusiness: 15,
-    issueYear: 2009,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-  },
-  {
-    licenseNumber: "894221",
-    companyName: "Bay Voltage Electric",
-    city: "San Francisco",
-    neighborhood: "Mission",
-    trade: "electrical",
-    classificationCode: "C-10",
-    classificationLabel: "C-10 Electrical",
-    yearsInBusiness: 22,
-    issueYear: 2002,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-    extraTags: ["CFL on file"],
-  },
-  {
-    licenseNumber: "1128946",
-    companyName: "Summit Roofing Works",
-    city: "San Diego",
-    neighborhood: "North Park",
-    trade: "roofing",
-    classificationCode: "C-39",
-    classificationLabel: "C-39 Roofing",
-    yearsInBusiness: 11,
-    issueYear: 2013,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-  },
-  {
-    licenseNumber: "786542",
-    companyName: "Coastline HVAC Services",
-    city: "Long Beach",
-    trade: "hvac",
-    classificationCode: "C-20",
-    classificationLabel: "C-20 HVAC",
-    yearsInBusiness: 28,
-    issueYear: 1996,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-  },
-  {
-    licenseNumber: "1210994",
-    companyName: "Fresh Coat Painters",
-    city: "Oakland",
-    neighborhood: "Rockridge",
-    trade: "painting",
-    classificationCode: "C-33",
-    classificationLabel: "C-33 Painting",
-    yearsInBusiness: 8,
-    issueYear: 2016,
-    status: "active",
-    bonded: true,
-    workersComp: false,
-  },
-  {
-    licenseNumber: "623481",
-    companyName: "Ironside General Builders",
-    city: "Sacramento",
-    neighborhood: "Midtown",
-    trade: "general",
-    classificationCode: "B",
-    classificationLabel: "B General Building",
-    yearsInBusiness: 33,
-    issueYear: 1991,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-    extraTags: ["CFL on file"],
-  },
-  {
-    licenseNumber: "1077812",
-    companyName: "Verde Landscape Design",
-    city: "Palo Alto",
-    trade: "landscaping",
-    classificationCode: "C-27",
-    classificationLabel: "C-27 Landscaping",
-    yearsInBusiness: 13,
-    issueYear: 2011,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-  },
-  {
-    licenseNumber: "1153320",
-    companyName: "Hillcrest Home Services",
-    city: "San Jose",
-    neighborhood: "Willow Glen",
-    trade: "general",
-    classificationCode: "B",
-    classificationLabel: "B General Building",
-    yearsInBusiness: 9,
-    issueYear: 2015,
-    status: "active",
-    bonded: false,
-    workersComp: true,
-  },
-  {
-    licenseNumber: "552108",
-    companyName: "Pacific Pipe & Drain",
-    city: "Fresno",
-    trade: "plumbing",
-    classificationCode: "C-36",
-    classificationLabel: "C-36 Plumbing",
-    yearsInBusiness: 41,
-    issueYear: 1983,
-    status: "expired",
-    bonded: true,
-    workersComp: false,
-  },
-  {
-    licenseNumber: "978345",
-    companyName: "Cascade Electric & Solar",
-    city: "Berkeley",
-    trade: "electrical",
-    classificationCode: "C-10",
-    classificationLabel: "C-10 Electrical",
-    yearsInBusiness: 17,
-    issueYear: 2007,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-  },
-  {
-    licenseNumber: "431267",
-    companyName: "Old Oak Roofing",
-    city: "Pasadena",
-    trade: "roofing",
-    classificationCode: "C-39",
-    classificationLabel: "C-39 Roofing",
-    yearsInBusiness: 44,
-    issueYear: 1980,
-    status: "suspended",
-    bonded: true,
-    workersComp: true,
-  },
-  {
-    licenseNumber: "1184567",
-    companyName: "Meridian Climate Control",
-    city: "Irvine",
-    neighborhood: "Woodbridge",
-    trade: "hvac",
-    classificationCode: "C-20",
-    classificationLabel: "C-20 HVAC",
-    yearsInBusiness: 10,
-    issueYear: 2014,
-    status: "active",
-    bonded: true,
-    workersComp: true,
-  },
+interface RawContractor {
+  licenseNumber: string;
+  companyName: string;
+  neighborhood?: string;
+  classifications: string[];
+  yearsInBusiness: number;
+  issueDate: string;
+  status?: LicenseStatus;
+  bonded?: boolean;
+  workersComp?: boolean;
+  extraTags?: string[];
+}
+
+const RAW: RawContractor[] = [
+  // ─── Plumbing (primary) ──────────────────────────────────────────────
+  { licenseNumber: "1045287", companyName: "Peninsula Plumbing",
+    neighborhood: "Downtown", classifications: ["C-36"],
+    yearsInBusiness: 37, issueDate: "1988-05-14",
+    bonded: true, workersComp: true },
+  { licenseNumber: "894221",  companyName: "Bayside Pipe & Drain",
+    neighborhood: "Baywood",  classifications: ["C-36"],
+    yearsInBusiness: 22, issueDate: "2003-02-19",
+    bonded: true, workersComp: true },
+  { licenseNumber: "723118",  companyName: "San Mateo Plumbing Works",
+    classifications: ["C-36"],
+    yearsInBusiness: 29, issueDate: "1996-09-02",
+    bonded: true, workersComp: true },
+  { licenseNumber: "912334",  companyName: "Reliable Plumbing Co.",
+    neighborhood: "Hillsdale", classifications: ["C-36", "C-20"],
+    yearsInBusiness: 15, issueDate: "2010-04-11",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1158811", companyName: "Shoreview Plumbing",
+    neighborhood: "Shoreview", classifications: ["C-36"],
+    yearsInBusiness: 8,  issueDate: "2017-06-22",
+    bonded: true, workersComp: false },
+  { licenseNumber: "1280456", companyName: "Coastside Plumbing & Rooter",
+    classifications: ["C-36"],
+    yearsInBusiness: 3,  issueDate: "2022-11-03",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1301299", companyName: "Edgewater Plumbing Group",
+    neighborhood: "Downtown", classifications: ["C-36", "C-20"],
+    yearsInBusiness: 1,  issueDate: "2024-08-29",
+    bonded: true, workersComp: true },
+  { licenseNumber: "552108",  companyName: "Pacific Pipe & Drain",
+    classifications: ["C-36"],
+    yearsInBusiness: 41, issueDate: "1984-01-17", status: "expired",
+    bonded: true, workersComp: false },
+  { licenseNumber: "668420",  companyName: "Fairmont Plumbing Services",
+    neighborhood: "Hillsdale", classifications: ["C-36"],
+    yearsInBusiness: 33, issueDate: "1992-03-08",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1167902", companyName: "Crestmoor Plumbing",
+    classifications: ["C-36", "C-15"],
+    yearsInBusiness: 10, issueDate: "2015-05-20",
+    bonded: false, workersComp: true },
+
+  // ─── Electrical (primary) ────────────────────────────────────────────
+  { licenseNumber: "984112",  companyName: "Bay Voltage Electric",
+    neighborhood: "Downtown", classifications: ["C-10"],
+    yearsInBusiness: 27, issueDate: "1998-07-11",
+    bonded: true, workersComp: true, extraTags: ["CFL"] },
+  { licenseNumber: "1031207", companyName: "Peninsula Power Works",
+    classifications: ["C-10"],
+    yearsInBusiness: 19, issueDate: "2006-10-03",
+    bonded: true, workersComp: true },
+  { licenseNumber: "873509",  companyName: "Aurora Electrical",
+    neighborhood: "Baywood",  classifications: ["C-10", "C-20"],
+    yearsInBusiness: 24, issueDate: "2001-05-27",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1189334", companyName: "Bright Spark Electric",
+    classifications: ["C-10", "C-20"],
+    yearsInBusiness: 7,  issueDate: "2018-02-14",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1234118", companyName: "Cascade Electric & Solar",
+    neighborhood: "Shoreview", classifications: ["C-10"],
+    yearsInBusiness: 4,  issueDate: "2021-09-02",
+    bonded: true, workersComp: true, extraTags: ["CFL"] },
+  { licenseNumber: "1295617", companyName: "Silverline Electric",
+    classifications: ["C-10"],
+    yearsInBusiness: 2,  issueDate: "2023-06-15",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1311820", companyName: "Meridian Electric Co.",
+    neighborhood: "Hillsdale", classifications: ["C-10"],
+    yearsInBusiness: 1,  issueDate: "2024-11-08",
+    bonded: true, workersComp: true },
+  { licenseNumber: "741220",  companyName: "Coast Power Systems",
+    classifications: ["C-10"],
+    yearsInBusiness: 32, issueDate: "1993-02-01",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1055721", companyName: "Voltaic Electric Works",
+    classifications: ["C-10", "C-36"],
+    yearsInBusiness: 17, issueDate: "2008-04-18",
+    bonded: false, workersComp: true },
+  { licenseNumber: "1322507", companyName: "Eastridge Electric",
+    neighborhood: "Downtown", classifications: ["C-10"],
+    yearsInBusiness: 0,  issueDate: "2025-03-12",
+    bonded: true, workersComp: true },
+
+  // ─── HVAC (primary) ──────────────────────────────────────────────────
+  { licenseNumber: "786542",  companyName: "Coastline HVAC Services",
+    classifications: ["C-20"],
+    yearsInBusiness: 28, issueDate: "1997-08-22",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1184567", companyName: "Meridian Climate Control",
+    neighborhood: "Baywood", classifications: ["C-20"],
+    yearsInBusiness: 10, issueDate: "2015-01-07",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1259018", companyName: "Bayview Heating & Air",
+    classifications: ["C-20", "C-36"],
+    yearsInBusiness: 6,  issueDate: "2019-07-11",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1307991", companyName: "Summit Climate Works",
+    classifications: ["C-20"],
+    yearsInBusiness: 1,  issueDate: "2024-10-19",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1088210", companyName: "Cascade Mechanical",
+    classifications: ["C-20"],
+    yearsInBusiness: 13, issueDate: "2012-03-30",
+    bonded: true, workersComp: false },
+
+  // ─── Roofing (primary) ───────────────────────────────────────────────
+  { licenseNumber: "1128946", companyName: "Summit Roofing Works",
+    classifications: ["C-39"],
+    yearsInBusiness: 11, issueDate: "2014-02-09",
+    bonded: true, workersComp: true },
+  { licenseNumber: "431267",  companyName: "Old Oak Roofing",
+    classifications: ["C-39"],
+    yearsInBusiness: 44, issueDate: "1981-05-02", status: "suspended",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1217603", companyName: "Peninsula Ridge Roofing",
+    neighborhood: "Hillsdale", classifications: ["C-39"],
+    yearsInBusiness: 5,  issueDate: "2020-08-17",
+    bonded: true, workersComp: true },
+
+  // ─── Painting (primary) ──────────────────────────────────────────────
+  { licenseNumber: "1210994", companyName: "Fresh Coat Painters",
+    classifications: ["C-33"],
+    yearsInBusiness: 8,  issueDate: "2017-04-22",
+    bonded: true, workersComp: false },
+  { licenseNumber: "1288711", companyName: "True North Painting",
+    neighborhood: "Shoreview", classifications: ["C-33"],
+    yearsInBusiness: 3,  issueDate: "2022-06-14",
+    bonded: true, workersComp: true },
+
+  // ─── General (Generalist) ────────────────────────────────────────────
+  { licenseNumber: "623481",  companyName: "Ironside General Builders",
+    classifications: ["B", "C-36", "C-10"],
+    yearsInBusiness: 33, issueDate: "1992-01-18",
+    bonded: true, workersComp: true, extraTags: ["CFL"] },
+  { licenseNumber: "1153320", companyName: "Bay Area Trades Co.",
+    neighborhood: "Downtown", classifications: ["B", "C-36", "C-10"],
+    yearsInBusiness: 9,  issueDate: "2016-09-02",
+    bonded: false, workersComp: true },
+  { licenseNumber: "1301044", companyName: "Hillcrest Home Services",
+    classifications: ["B", "C-33"],
+    yearsInBusiness: 1,  issueDate: "2024-07-12",
+    bonded: true, workersComp: true },
+
+  // ─── Landscape (primary) ─────────────────────────────────────────────
+  { licenseNumber: "1077812", companyName: "Verde Landscape Design",
+    classifications: ["C-27"],
+    yearsInBusiness: 14, issueDate: "2011-05-16",
+    bonded: true, workersComp: true },
+  { licenseNumber: "1299102", companyName: "Baywood Green Landscape",
+    neighborhood: "Baywood", classifications: ["C-27"],
+    yearsInBusiness: 2,  issueDate: "2023-04-07",
+    bonded: true, workersComp: true },
+
+  // ─── Flooring (primary) ──────────────────────────────────────────────
+  { licenseNumber: "1201488", companyName: "Keystone Flooring",
+    classifications: ["C-15"],
+    yearsInBusiness: 11, issueDate: "2014-11-20",
+    bonded: true, workersComp: true },
 ];
+
+export const MOCK_CONTRACTORS: MockContractor[] = RAW.map((r) => ({
+  licenseNumber: r.licenseNumber,
+  companyName: r.companyName,
+  city: "San Mateo",
+  neighborhood: r.neighborhood,
+  classifications: r.classifications,
+  type: deriveType(r.classifications),
+  primaryTrade: primaryTradeFor(r.classifications),
+  yearsInBusiness: r.yearsInBusiness,
+  issueDate: r.issueDate,
+  status: r.status ?? "active",
+  bonded: r.bonded ?? false,
+  workersComp: r.workersComp ?? false,
+  extraTags: r.extraTags,
+}));

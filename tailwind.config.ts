@@ -33,18 +33,25 @@ const config: Config = {
           strong: "#D4D4D8",  // heavier divider
           subtle: "#E5E5E5",  // homepage spec border
         },
-        // Homepage brand — soft blue. Reserved for the wordmark, primary CTA,
-        // the search button, active category underline, and filled-heart save.
+        // Homepage brand — deep crimson. ACTIONS ONLY: wordmark, primary
+        // CTA, search button, active saved-heart, focus rings. Never used
+        // for trade color-coding, section headers, or decoration.
         brand: {
-          DEFAULT: "#4F7CAC", // primary soft blue
-          hover:   "#406996", // darker for hover
-          50:  "#EEF3F9",     // lightest tint, badge backgrounds
-          100: "#D7E4F0",     // mid tint, hover surfaces
-          900: "#23364E",     // darkest, text on brand-50 fills
+          DEFAULT: "#B91C1C",
+          hover:   "#9F1818",
+          50:  "#FBECEC",     // soft fill / badge backgrounds
+          100: "#FECACA",     // hover surfaces
+          900: "#5A0E0E",     // dark text on brand-50 fills
         },
         // License-card credential tile palette
         credential: {
-          DEFAULT: "#1E1B1A", // near-black with hint of warmth
+          DEFAULT: "#1E1B1A",
+        },
+        // Warm cream canvas for trade-variant cards (Skilled/Generalist).
+        // Intentionally not pure gray — reads warmer next to the saturated
+        // trade color bars.
+        cream: {
+          DEFAULT: "#F7F5F0",
         },
         // Legacy Fixd neutral brand — kept so /search + /saved keep their Linear/Stripe feel
         fixd: {

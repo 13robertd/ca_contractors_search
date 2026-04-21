@@ -11,7 +11,7 @@ import {
   Trees,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { TradeSlug } from "@/lib/mockContractors";
+import type { TradeSlug } from "@/lib/trades";
 
 export type CategoryId = "all" | TradeSlug;
 
@@ -29,7 +29,7 @@ export const CATEGORIES: Category[] = [
   { id: "hvac",        label: "HVAC",         icon: Snowflake   },
   { id: "painting",    label: "Painters",     icon: PaintBucket },
   { id: "general",     label: "General",      icon: Hammer      },
-  { id: "landscaping", label: "Landscapers",  icon: Trees       },
+  { id: "landscape",   label: "Landscapers",  icon: Trees       },
 ];
 
 interface Props {

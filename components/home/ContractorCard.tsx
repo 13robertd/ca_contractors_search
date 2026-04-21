@@ -4,30 +4,37 @@ import Link from "next/link";
 import { useState } from "react";
 import { Heart } from "lucide-react";
 import type { MockContractor } from "@/lib/mockContractors";
-import LicenseCard from "./LicenseCard";
+import LicenseVariant from "./LicenseVariant";
+import TradeVariant, { tradeSubtitle } from "./TradeVariant";
+
+export type CardVariant = "license" | "trade";
+export type CardSize = "default" | "compact";
 
 interface Props {
   contractor: MockContractor;
-  /** Optional: multiple "slides" (e.g. map view, work photos) for the bottom dots. */
-  slideCount?: number;
+  variant: CardVariant;
+  size?: CardSize;
 }
 
-export default function ContractorCard({ contractor: c, slideCount = 1 }: Props) {
+/**
+ * Unified outer shell for homepage contractor cards. Dispatches the
+ * image area to the correct variant component, renders the heart
+ * overlay, and renders the bottom meta (company name + subtitle).
+ */
+export default function ContractorCard({
+  contractor: c,
+  variant,
+  size = "default",
+}: Props) {
   const [saved, setSaved] = useState(false);
   const [pulse, setPulse] = useState(false);
 
   const href = `/contractor/${encodeURIComponent(c.licenseNumber)}`;
+  const isCompact = size === "compact";
 
-  // Trust summary: "{class} · {years} yrs[ · Bonded]"
-  const trustSummary = [
-    c.classificationLabel,
-    `${c.yearsInBusiness} yrs`,
-    c.bonded ? "Bonded" : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-  const locationLine = c.neighborhood ? `${c.city} · ${c.neighborhood}` : c.city;
+  // Both variants share the same subtitle rules (trade name / trades list /
+  // "General · …" for Generalists). Consistent under a mixed grid.
+  const subtitle = tradeSubtitle(c, size);
 
   function toggleSaved(e: React.MouseEvent) {
     e.preventDefault();
@@ -37,62 +44,67 @@ export default function ContractorCard({ contractor: c, slideCount = 1 }: Props)
     window.setTimeout(() => setPulse(false), 240);
   }
 
+  // Hover filters differ by variant (brighten dark tile, slightly darken cream tile).
+  const hoverFilter =
+    variant === "license"
+      ? "group-hover:brightness-[1.04]"
+      : "group-hover:brightness-[0.98]";
+
+  const radius = isCompact ? "rounded-[10px]" : "rounded-[12px]";
+  const imageBg = variant === "license" ? "bg-credential" : "";
+  const heartOffset = variant === "license" ? "top-3 right-3" : "top-2 right-2";
+  const heartSize = variant === "license" ? 22 : 18;
+
+  const topPadding = isCompact ? "pt-[7px]" : "pt-[7px]";
+  const titleSize = isCompact ? "text-[12px]" : "text-[14px]";
+  const subtitleSize = isCompact ? "text-[11px]" : "text-[13px]";
+
   return (
     <Link
       href={href}
       aria-label={`${c.companyName} — CSLB license ${c.licenseNumber}`}
-      className="group block rounded-[12px] focus-brand"
+      className={`group block ${radius} focus-brand`}
     >
-      {/* License-card image area */}
-      <div className="relative aspect-square rounded-[12px] overflow-hidden bg-credential transition-[filter] duration-[250ms] group-hover:brightness-[1.04]">
-        <LicenseCard contractor={c} />
+      {/* Image area (aspect-square) */}
+      <div
+        className={`relative aspect-square ${radius} overflow-hidden ${imageBg} transition-[filter] duration-[250ms] ${hoverFilter}`}
+      >
+        {variant === "license" ? (
+          <LicenseVariant contractor={c} size={size} />
+        ) : (
+          <TradeVariant contractor={c} size={size} />
+        )}
 
-        {/* Heart overlay */}
+        {/* Heart button (both variants) */}
         <button
           type="button"
           onClick={toggleSaved}
           aria-label={saved ? `Unsave ${c.companyName}` : `Save ${c.companyName}`}
           aria-pressed={saved}
-          className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full focus-brand"
+          className={`absolute ${heartOffset} inline-flex items-center justify-center rounded-full focus-brand`}
         >
           <Heart
-            size={22}
+            size={heartSize}
             strokeWidth={1.8}
             className={`transition-colors ${pulse ? "heart-pulse" : ""}`}
             style={{
               color: "#FFFFFF",
-              fill: saved ? "#4F7CAC" : "rgba(0,0,0,0.3)",
+              fill: saved ? "#B91C1C" : "rgba(0,0,0,0.3)",
             }}
           />
         </button>
-
-        {/* Carousel dots — hidden if only one slide */}
-        {slideCount > 1 ? (
-          <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5">
-            {Array.from({ length: Math.min(slideCount, 3) }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 w-1.5 rounded-full ${
-                  i === 0 ? "bg-white" : "bg-white/50"
-                }`}
-              />
-            ))}
-          </div>
-        ) : null}
       </div>
 
-      {/* Meta */}
-      <div className="pt-[10px]">
-        <h3 className="text-[15px] font-medium text-ink-hero truncate">
+      {/* Bottom meta */}
+      <div className={topPadding}>
+        <h3 className={`${titleSize} font-medium text-ink-hero truncate`}>
           {c.companyName}
         </h3>
-        <p className="mt-0.5 text-[14px] text-ink-secondary truncate">
-          {locationLine}
-        </p>
-        <p className="mt-0.5 text-[14px] text-ink-secondary truncate">
-          {trustSummary}
+        <p className={`mt-0.5 ${subtitleSize} text-ink-secondary truncate`}>
+          {subtitle}
         </p>
       </div>
     </Link>
   );
 }
+

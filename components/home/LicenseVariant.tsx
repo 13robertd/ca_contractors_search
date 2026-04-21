@@ -1,14 +1,13 @@
-import type { LicenseStatus, MockContractor } from "@/lib/mockContractors";
+import type { MockContractor, LicenseStatus } from "@/lib/mockContractors";
+import type { CardSize } from "./ContractorCard";
 
 /**
- * Dark "credential tile" used as the top image area of every homepage
- * ContractorCard. No real photos — the public license data IS the hero.
- *
- * Presentational only: parent renders the heart overlay and carousel dots.
+ * Inner content of the dark credential tile. Presentation-only; the
+ * outer ContractorCard provides the Link wrapper and heart overlay.
  */
-
 interface Props {
   contractor: MockContractor;
+  size: CardSize;
 }
 
 const STATUS_STYLES: Record<
@@ -35,23 +34,53 @@ const STATUS_STYLES: Record<
   },
 };
 
-export default function LicenseCard({ contractor: c }: Props) {
-  const status = STATUS_STYLES[c.status];
+function classificationLabel(codes: string[], size: CardSize): string {
+  // Prefer the first non-B code for the CLASS field (Specialist/Skilled),
+  // fall back to "B General Building" for all-B generalists.
+  const primary = codes.find((c) => c !== "B") ?? codes[0] ?? "—";
+  if (size === "compact") return primary;
+  const human: Record<string, string> = {
+    B: "B General Building",
+    "C-10": "C-10 Electrical",
+    "C-15": "C-15 Flooring",
+    "C-20": "C-20 HVAC",
+    "C-27": "C-27 Landscaping",
+    "C-33": "C-33 Painting",
+    "C-36": "C-36 Plumbing",
+    "C-39": "C-39 Roofing",
+  };
+  return human[primary] ?? primary;
+}
 
+function complianceTags(c: MockContractor, size: CardSize): string[] {
   const tags: string[] = [];
   if (c.bonded) tags.push("Bonded");
-  if (c.workersComp) tags.push("Workers' comp");
+  if (c.workersComp) tags.push(size === "compact" ? "WC" : "Workers' comp");
   if (c.extraTags) tags.push(...c.extraTags);
+  return tags;
+}
+
+export default function LicenseVariant({ contractor: c, size }: Props) {
+  const status = STATUS_STYLES[c.status];
+  const tags = complianceTags(c, size);
+  const isCompact = size === "compact";
+
+  const padding = isCompact ? "p-[14px]" : "p-[18px]";
+  const licenseSize = isCompact ? "text-[14px]" : "text-[17px]";
+  const metaSize = isCompact ? "text-[11px]" : "text-[13px]";
+  const issuedLabel = isCompact ? "EST." : "ISSUED";
 
   return (
-    <div className="absolute inset-0 p-[18px] flex flex-col justify-between">
+    <div className={`absolute inset-0 ${padding} flex flex-col justify-between`}>
       {/* Top row: license number + status pill */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[9px] font-medium uppercase tracking-[1px] text-white/55">
             CSLB License
           </div>
-          <div className="mt-1 text-[17px] font-medium tracking-[1px] text-white font-mono truncate">
+          <div
+            className={`mt-1 ${licenseSize} font-medium tracking-[1px] text-white font-mono truncate`}
+          >
             #{c.licenseNumber}
           </div>
         </div>
@@ -74,8 +103,16 @@ export default function LicenseCard({ contractor: c }: Props) {
       {/* Bottom: meta fields + compliance tags */}
       <div className="flex flex-col gap-2">
         <div className="flex gap-6">
-          <MetaField label="CLASS" value={c.classificationLabel} />
-          <MetaField label="ISSUED" value={String(c.issueYear)} />
+          <MetaField
+            label="CLASS"
+            value={classificationLabel(c.classifications, size)}
+            metaSize={metaSize}
+          />
+          <MetaField
+            label={issuedLabel}
+            value={c.issueDate.slice(0, 4)}
+            metaSize={metaSize}
+          />
         </div>
 
         {tags.length > 0 ? (
@@ -95,13 +132,21 @@ export default function LicenseCard({ contractor: c }: Props) {
   );
 }
 
-function MetaField({ label, value }: { label: string; value: string }) {
+function MetaField({
+  label,
+  value,
+  metaSize,
+}: {
+  label: string;
+  value: string;
+  metaSize: string;
+}) {
   return (
     <div className="min-w-0">
       <div className="text-[9px] font-medium uppercase tracking-[1px] text-white/55">
         {label}
       </div>
-      <div className="mt-1 text-[13px] font-medium text-white truncate">
+      <div className={`mt-1 ${metaSize} font-medium text-white truncate`}>
         {value}
       </div>
     </div>
