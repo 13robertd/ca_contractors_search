@@ -142,13 +142,13 @@ export default function HomePage() {
         </section>
       ) : null}
 
-      {/* Main grid */}
+      {/* Filtered grid — only renders when a specific category is active.
+          Browsing "All" is handled entirely by the curated sections above. */}
+      {!showSections ? (
       <section>
         <div className="page-container pb-20">
           <h2 className="text-[22px] font-medium text-ink-hero tracking-[-0.3px]">
-            {active === "all"
-              ? `All contractors in ${CITY}`
-              : `${labelFor(active)} in ${CITY}`}
+            {`${labelFor(active)} in ${CITY}`}
           </h2>
           <p className="mt-1 text-[15px] text-ink-secondary">
             {mainGrid.length} {mainGrid.length === 1 ? "listing" : "listings"}
@@ -170,6 +170,7 @@ export default function HomePage() {
           )}
         </div>
       </section>
+      ) : null}
     </div>
   );
 }
