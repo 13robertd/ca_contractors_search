@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, Phone } from "lucide-react";
 import { getContractorByLicense } from "@/lib/queries";
+import { findMockContractor } from "@/lib/mockContractors";
 import {
   formatDate,
   formatPhone,
@@ -57,12 +58,27 @@ function ownershipLabel(code: string | null): string {
   return map[code] ?? code;
 }
 
+/**
+ * Fetch by license — Supabase first, then fall back to the homepage mock
+ * dataset. The homepage's curated sections render from mocks so clicks on
+ * those cards land here with license numbers that aren't in the real
+ * database yet; the fallback keeps the UX intact until those rows are
+ * ingested.
+ */
+async function loadContractor(license: string) {
+  const row = await getContractorByLicense(license).catch((err) => {
+    console.error("[Fixd] contractor detail fetch error", err);
+    return null;
+  });
+  return row ?? findMockContractor(license);
+}
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { license_number } = await params;
   const license = decodeURIComponent(license_number);
-  const c = await getContractorByLicense(license).catch(() => null);
+  const c = await loadContractor(license);
 
   if (!c) {
     return {
@@ -88,10 +104,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
   const { license_number } = await params;
   const license = decodeURIComponent(license_number);
 
-  const contractor = await getContractorByLicense(license).catch((err) => {
-    console.error("[Fixd] contractor detail fetch error", err);
-    return null;
-  });
+  const contractor = await loadContractor(license);
 
   if (!contractor) notFound();
   const c = contractor;

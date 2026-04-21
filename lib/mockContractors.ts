@@ -11,9 +11,12 @@
  * that city per the spec.
  */
 
+import type { Contractor } from "@/types/contractor";
 import {
   deriveType,
   primaryTradeFor,
+  tradeFromClass,
+  TRADE_COLORS,
   type ContractorType,
   type TradeSlug,
 } from "./trades";
@@ -251,3 +254,66 @@ export const MOCK_CONTRACTORS: MockContractor[] = RAW.map((r) => ({
   workersComp: r.workersComp ?? false,
   extraTags: r.extraTags,
 }));
+
+/**
+ * Adapter from the homepage mock shape into the real `Contractor` shape
+ * used by the detail page and queries. Lets clicks on homepage mock
+ * cards open the same detail page without hitting Supabase.
+ *
+ * Many real-schema fields don't exist in mock data (address, phone,
+ * suspension_reason, etc.) and are filled with null or sensible
+ * defaults. The detail page already handles null gracefully.
+ */
+export function mockContractorToContractor(m: MockContractor): Contractor {
+  const classificationLabels = m.classifications.map((code) => {
+    const label = TRADE_COLORS[tradeFromClass(code)].label;
+    return `${code} ${label} Contractor`;
+  });
+  const issueYear = Number.parseInt(m.issueDate.slice(0, 4), 10);
+  const primaryTradeLabel = TRADE_COLORS[m.primaryTrade].label;
+  const isActive = m.status === "active";
+
+  return {
+    license_number: m.licenseNumber,
+    business_name: m.companyName,
+    full_business_name: null,
+    address: null,
+    city: m.city,
+    state: "CA",
+    zip_code: null,
+    county: "San Mateo",
+    phone: null,
+    business_type: null,
+    classification_codes: m.classifications,
+    classification_labels: classificationLabels,
+    primary_trade: primaryTradeLabel,
+    classification_count: m.classifications.length,
+    has_multiple_classifications: m.classifications.length > 1,
+    primary_status:
+      m.status === "active"
+        ? "Active"
+        : m.status === "expired"
+        ? "Expired"
+        : "Suspended",
+    suspension_reason: null,
+    is_active: isActive,
+    expires_soon_90d: false,
+    issue_date: m.issueDate,
+    expiration_date: null,
+    years_in_business: Number.isFinite(issueYear)
+      ? m.yearsInBusiness
+      : null,
+    last_update: null,
+    has_workers_comp: m.workersComp,
+    has_contractor_bond: m.bonded,
+    has_pending_suspension: m.status === "suspended",
+    has_disciplinary_history: false,
+    search_blob: null,
+  };
+}
+
+/** Look up a mock contractor by license number and adapt to Contractor. */
+export function findMockContractor(license: string): Contractor | null {
+  const m = MOCK_CONTRACTORS.find((x) => x.licenseNumber === license);
+  return m ? mockContractorToContractor(m) : null;
+}
