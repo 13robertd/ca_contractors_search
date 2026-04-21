@@ -33,14 +33,14 @@ const config: Config = {
           strong: "#D4D4D8",  // heavier divider
           subtle: "#E5E5E5",  // homepage spec border
         },
-        // Homepage brand — crimson. Reserved for the wordmark, primary CTA,
+        // Homepage brand — soft blue. Reserved for the wordmark, primary CTA,
         // the search button, active category underline, and filled-heart save.
         brand: {
-          DEFAULT: "#B91C1C", // primary crimson
-          hover:   "#9F1818",
-          50:  "#FBECEC",     // lightest tint, badge backgrounds
-          100: "#FECACA",     // mid tint, hover surfaces
-          900: "#5A0E0E",     // darkest, text on brand-50 fills
+          DEFAULT: "#4F7CAC", // primary soft blue
+          hover:   "#406996", // darker for hover
+          50:  "#EEF3F9",     // lightest tint, badge backgrounds
+          100: "#D7E4F0",     // mid tint, hover surfaces
+          900: "#23364E",     // darkest, text on brand-50 fills
         },
         // License-card credential tile palette
         credential: {

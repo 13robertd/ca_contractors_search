@@ -61,7 +61,7 @@ export default function ContractorCard({ contractor: c, slideCount = 1 }: Props)
             className={`transition-colors ${pulse ? "heart-pulse" : ""}`}
             style={{
               color: "#FFFFFF",
-              fill: saved ? "#B91C1C" : "rgba(0,0,0,0.3)",
+              fill: saved ? "#4F7CAC" : "rgba(0,0,0,0.3)",
             }}
           />
         </button>
