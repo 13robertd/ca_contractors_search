@@ -136,7 +136,7 @@ table — the UI won't need to change.
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - (optional) `NEXT_PUBLIC_SITE_URL` — your custom domain, e.g.
-     `https://trustbuild.com`. Used for OG/canonical URLs.
+     `https://fixd.app`. Used for OG/canonical URLs.
 5. Deploy.
 
 ### Option B — Vercel CLI (fastest for solo dev)
