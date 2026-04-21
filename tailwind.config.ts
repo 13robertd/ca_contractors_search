@@ -33,15 +33,21 @@ const config: Config = {
           strong: "#D4D4D8",  // heavier divider
           subtle: "#E5E5E5",  // homepage spec border
         },
-        // Homepage brand — deep crimson. ACTIONS ONLY: wordmark, primary
-        // CTA, search button, active saved-heart, focus rings. Never used
-        // for trade color-coding, section headers, or decoration.
+        // Homepage brand — deep crimson. ACTIONS ONLY: primary CTA, search
+        // button, active saved-heart, focus rings. Never used for trade
+        // color-coding, section headers, or decoration.
         brand: {
           DEFAULT: "#B91C1C",
           hover:   "#9F1818",
           50:  "#FBECEC",     // soft fill / badge backgrounds
           100: "#FECACA",     // hover surfaces
           900: "#5A0E0E",     // dark text on brand-50 fills
+        },
+        // Wordmark only — soft blue. Kept separate from `brand` so the
+        // Fixd mark can stay calm/editorial while actions remain crimson.
+        wordmark: {
+          DEFAULT: "#4F7CAC",
+          hover:   "#3E6995",
         },
         // License-card credential tile palette
         credential: {

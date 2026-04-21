@@ -69,7 +69,7 @@ export default function SiteHeader() {
         <Link
           href="/"
           aria-label="Fixd home"
-          className="font-sans text-[22px] font-medium tracking-tight text-brand focus-brand rounded-sm"
+          className="font-sans text-[22px] font-medium tracking-tight text-wordmark hover:text-wordmark-hover transition-colors focus-brand rounded-sm"
         >
           Fixd
         </Link>
