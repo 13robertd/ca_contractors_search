@@ -16,6 +16,9 @@ const VALID_CATEGORIES = new Set(CATEGORIES.map((c) => c.id));
 /** Hardcoded for this pass — city switcher is out of scope. */
 const CITY = "San Mateo";
 
+/** "Newly licensed" window: last 24 months from today. */
+const NEWLY_LICENSED_WINDOW_MS = 24 * 30 * 24 * 60 * 60 * 1000;
+
 export default function HomePage() {
   const router = useRouter();
   const [active, setActive] = useState<CategoryId>("all");
@@ -58,6 +61,21 @@ export default function HomePage() {
       ).slice(0, 8),
     []
   );
+  const electricalSection = useMemo(
+    () =>
+      sortByYearsDesc(
+        byPrimary(MOCK_CONTRACTORS, "electrical", { primaryTradeOnly: true })
+      ).slice(0, 8),
+    []
+  );
+  const newlyLicensedSection = useMemo(() => {
+    const cutoff = Date.now() - NEWLY_LICENSED_WINDOW_MS;
+    return MOCK_CONTRACTORS.filter(
+      (c) => c.status === "active" && Date.parse(c.issueDate) >= cutoff
+    )
+      .sort((a, b) => Date.parse(b.issueDate) - Date.parse(a.issueDate))
+      .slice(0, 8);
+  }, []);
 
   const mainGrid = useMemo(() => {
     if (active === "all") return MOCK_CONTRACTORS;
@@ -105,6 +123,19 @@ export default function HomePage() {
               title={`Established General Contractors in ${CITY}`}
               contractors={generalSection}
               seeAllHref="/search?trade=general&sort=yearsDesc"
+              variant="trade"
+            />
+            <ContractorSection
+              title={`Established Electrical In ${CITY}`}
+              contractors={electricalSection}
+              seeAllHref="/search?trade=electrical&sort=yearsDesc"
+              variant="trade"
+            />
+            <ContractorSection
+              title={`Newly Licensed in ${CITY}`}
+              subtitle="Recent additions to the CSLB registry"
+              contractors={newlyLicensedSection}
+              seeAllHref="/search?sort=newestFirst"
               variant="trade"
             />
           </div>
