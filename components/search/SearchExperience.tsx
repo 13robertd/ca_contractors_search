@@ -6,6 +6,7 @@ import ResultsHeader from "./ResultsHeader";
 import ContractorList from "./ContractorList";
 import ContractorMap from "./ContractorMap";
 import MapSummaryCard from "./MapSummaryCard";
+import { PillButton } from "@/components/ui";
 import type { ContractorListing } from "@/lib/listings";
 import { isInBounds, type Bounds } from "@/lib/geo";
 
@@ -80,18 +81,22 @@ export default function SearchExperience({ listings, initial }: Props) {
         {/* Mobile list/map toggle */}
         <div className="lg:hidden border-t border-line-subtle">
           <div className="page-container py-2 flex items-center gap-2">
-            <ToggleButton
-              active={mobileView === "list"}
+            <PillButton
+              size="sm"
+              variant={mobileView === "list" ? "active" : "neutral"}
+              aria-pressed={mobileView === "list"}
               onClick={() => setMobileView("list")}
             >
               List
-            </ToggleButton>
-            <ToggleButton
-              active={mobileView === "map"}
+            </PillButton>
+            <PillButton
+              size="sm"
+              variant={mobileView === "map" ? "active" : "neutral"}
+              aria-pressed={mobileView === "map"}
               onClick={() => setMobileView("map")}
             >
               Map
-            </ToggleButton>
+            </PillButton>
             <span className="ml-auto text-[13px] text-ink-secondary tabular-nums">
               {visibleListings.length} in view
             </span>
@@ -167,26 +172,3 @@ export default function SearchExperience({ listings, initial }: Props) {
   );
 }
 
-function ToggleButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center justify-center h-8 px-4 rounded-full text-[13px] font-medium transition-colors focus-brand ${
-        active
-          ? "bg-ink-hero text-white"
-          : "bg-white border border-line-subtle text-ink-hero hover:bg-surface-subtle"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}

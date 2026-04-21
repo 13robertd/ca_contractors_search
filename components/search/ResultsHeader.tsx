@@ -1,3 +1,5 @@
+import { SectionHeading } from "@/components/ui";
+
 interface Props {
   visibleCount: number;
   totalCount: number;
@@ -5,9 +7,8 @@ interface Props {
 }
 
 /**
- * Mirrors the home page section-heading treatment:
- *   text-[22px] font-medium text-ink-hero tracking-[-0.3px]
- * so /search and / feel like the same product.
+ * /search page-level heading. Uses the shared <SectionHeading> primitive
+ * (as="h1") so the type hierarchy stays 1:1 with the homepage section rows.
  */
 export default function ResultsHeader({
   visibleCount,
@@ -15,22 +16,25 @@ export default function ResultsHeader({
   isFiltered,
 }: Props) {
   return (
-    <header className="mb-5">
-      <h1 className="text-[22px] font-medium tracking-[-0.3px] text-ink-hero m-0">
-        {visibleCount} {visibleCount === 1 ? "contractor" : "contractors"}{" "}
-        within map area
-      </h1>
-      <p className="mt-1 text-[15px] text-ink-secondary">
-        Showing licensed and verified contractors near you
-        {isFiltered ? (
-          <>
-            {" · "}
-            <span className="text-ink-tertiary tabular-nums">
-              {totalCount - visibleCount} hidden outside view
-            </span>
-          </>
-        ) : null}
-      </p>
-    </header>
+    <SectionHeading
+      as="h1"
+      className="mb-5"
+      title={`${visibleCount} ${
+        visibleCount === 1 ? "contractor" : "contractors"
+      } within map area`}
+      subtitle={
+        <>
+          Showing licensed and verified contractors near you
+          {isFiltered ? (
+            <>
+              {" · "}
+              <span className="text-ink-tertiary tabular-nums">
+                {totalCount - visibleCount} hidden outside view
+              </span>
+            </>
+          ) : null}
+        </>
+      }
+    />
   );
 }

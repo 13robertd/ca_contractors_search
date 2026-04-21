@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import type { MockContractor } from "@/lib/mockContractors";
+import { SectionHeading } from "@/components/ui";
 import ContractorCard, { type CardVariant } from "./ContractorCard";
 
 interface Props {
@@ -36,22 +35,11 @@ export default function ContractorSection({
 
   return (
     <section className="mb-12">
-      {/* Header */}
-      <div className="flex items-center gap-[14px]">
-        <h2 className="text-[22px] font-medium text-ink-hero tracking-[-0.3px] m-0">
-          {title}
-        </h2>
-        <Link
-          href={seeAllHref}
-          aria-label={`See all: ${title}`}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#F1F1F1] hover:bg-[#E5E5E5] text-ink-hero transition-colors focus-brand"
-        >
-          <ArrowRight size={14} strokeWidth={2.25} aria-hidden />
-        </Link>
-      </div>
-      {subtitle ? (
-        <p className="mt-1 text-[15px] text-ink-secondary">{subtitle}</p>
-      ) : null}
+      <SectionHeading
+        title={title}
+        subtitle={subtitle}
+        seeAllHref={seeAllHref}
+      />
 
       {/* Cards */}
       <div

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { IconButton } from "@/components/ui";
 import { isSaved, toggleSaved } from "@/lib/savedContractors";
 
 interface Props {
@@ -38,23 +39,20 @@ export default function SaveContractorButton({
   const active = mounted && saved;
 
   if (variant === "icon") {
-    // Matches the home page's 32×32 circle-icon-button pattern (the nav
-    // menu button) — white surface, line-subtle border, brand-red on saved.
+    // Home/search shared 32×32 circle-icon-button: neutral by default,
+    // brand-red fill when saved.
     return (
-      <button
-        type="button"
+      <IconButton
+        size="sm"
+        tone={active ? "brand" : "neutral"}
         onClick={onClick}
         aria-pressed={active}
         aria-label={active ? "Unsave contractor" : "Save contractor"}
         title={active ? "Saved" : "Save"}
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-brand ${
-          active
-            ? "bg-brand border border-brand text-white hover:bg-brand-hover"
-            : "bg-white border border-line-subtle text-ink-hero hover:bg-surface-subtle"
-        } ${className}`}
+        className={className}
       >
         <BookmarkIcon filled={active} />
-      </button>
+      </IconButton>
     );
   }
 
