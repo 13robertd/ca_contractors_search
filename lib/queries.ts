@@ -6,6 +6,27 @@ import { CONTRACTOR_CARD_COLUMNS } from "@/types/contractor";
  * All Supabase queries live here. Edit this file to change search behavior.
  */
 
+/**
+ * Total rows in `contractors` for homepage trust copy. Head-only count;
+ * returns 0 if Supabase is unavailable or errors.
+ */
+export async function getPublicContractorCount(): Promise<number> {
+  try {
+    const supabase = getSupabase();
+    const { count, error } = await supabase
+      .from("contractors")
+      .select("*", { count: "exact", head: true });
+    if (error) {
+      console.error("getPublicContractorCount error:", error);
+      return 0;
+    }
+    return count ?? 0;
+  } catch (e) {
+    console.error("getPublicContractorCount:", e);
+    return 0;
+  }
+}
+
 export interface SearchParams {
   location?: string;
   trade?: string;

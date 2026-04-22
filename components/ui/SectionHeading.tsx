@@ -1,17 +1,7 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 /**
- * Shared heading treatment used by the homepage section rows and the
- * /search results header. Handles three responsibilities:
- *
- *   1. Canonical title type: 22px / 500 / ink-hero / tracking-[-0.3px].
- *   2. Canonical subtitle type: 15px / ink-secondary.
- *   3. Optional "see all" affordance — a 32px #F1F1F1 circle arrow button
- *      rendered as a Link when `seeAllHref` is provided.
- *
- * Use `as="h1"` for page-level headings (e.g. /search results count).
- * Use the default `as="h2"` for homepage section rows.
+ * Section title + optional subtitle + optional “See all →” text link.
  */
 
 interface Props {
@@ -35,17 +25,16 @@ export default function SectionHeading({
 
   return (
     <header className={className}>
-      <div className="flex items-center gap-[14px]">
-        <Tag className="text-[22px] font-medium text-ink-hero tracking-[-0.3px] m-0">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        <Tag className="m-0 min-w-0 flex-1 text-[22px] font-medium tracking-[-0.3px] text-ink-hero">
           {title}
         </Tag>
         {seeAllHref ? (
           <Link
             href={seeAllHref}
-            aria-label={seeAllLabel ?? `See all: ${title}`}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#F1F1F1] hover:bg-[#E5E5E5] text-ink-hero transition-colors focus-brand"
+            className="shrink-0 text-[14px] font-medium text-accent transition-colors hover:text-accent-hover hover:underline focus-brand rounded-sm"
           >
-            <ArrowRight size={14} strokeWidth={2.25} aria-hidden />
+            {seeAllLabel ?? "See all →"}
           </Link>
         ) : null}
       </div>

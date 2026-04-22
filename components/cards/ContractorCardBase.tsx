@@ -1,20 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, OctagonAlert } from "lucide-react";
 import SaveContractorButton from "@/components/SaveContractorButton";
+import TrustBadgeRow from "@/components/TrustBadgeRow";
 import { formatPhone, formatYears } from "@/lib/formatters";
 import { getTradeStyle } from "@/lib/trade-colors";
-import type { ContractorCardData, TrustFlags } from "@/lib/cardData";
+import type { ContractorCardData } from "@/lib/cardData";
 
 /**
  * ContractorCardBase — the one contractor card used everywhere.
  *
  * Color language (the "brand anchor" for each card):
  *
- *   • LEFT BORDER is 4px solid in the PRIMARY TRADE COLOR.
- *     Always visible. One color per card — never split, never striped.
- *     Unknown trade → neutral gray (DEFAULT_TRADE).
+ *   • LEFT ACCENT is a 4px vertical strip (trade `.dot` bg) in a flex row,
+ *     with `rounded-l-[12px]` so it follows the card corner — avoids the
+ *     “square” misalignment of `border-l-4` against `rounded-[12px]`.
  *
  *   • TOP-LEFT ICON uses the same primary trade color (lucide icon,
  *     20px, tinted via `trade.text`). Paired with the border so the
@@ -25,19 +25,18 @@ import type { ContractorCardData, TrustFlags } from "@/lib/cardData";
  *     color; primary-trade duplicates are filtered out. For 1-3
  *     classifications the card stays clean (no dots).
  *
- * Trust language (exception-based):
- *
- *   • Risk signals only appear when something is wrong (discipline,
- *     inactive, missing coverage). Clean contractor = no chips.
+ * Trust: on the `detailed` variant, the full <TrustBadgeRow> renders
+ * (green ✓ for Active / WC / Bonded when true; amber ⚠ for missing
+ * WC/bond; discipline / suspension called out). Matches /search.
  *
  * Density:
  *
- *   variant="preview"   Homepage browse cards. Name, trade·city,
- *                       risk signals (if any), compact meta line.
- *                       No service-tag row, no metadata grid.
+ *   variant="preview"   Compact meta line only; no service-tag row or
+ *                       trust strip (prefer `ContractorCard` default
+ *                       detailed for homepage sections).
  *
- *   variant="detailed"  Search + saved cards. Adds the service-tag
- *                       row and the YEARS / LICENSE / PHONE footer.
+ *   variant="detailed"  Trust badges + service-tag row + YEARS /
+ *                       LICENSE / PHONE footer.
  */
 
 type Variant = "preview" | "detailed";
@@ -49,6 +48,12 @@ interface Props {
   isHighlighted?: boolean;
   onHover?: (id: string | null) => void;
   className?: string;
+  /**
+   * Use on homepage grids / horizontal rails: card fills the stretched cell
+   * (`h-full`) and the YEARS/LICENSE/PHONE row pins to the bottom so every
+   * card in a row matches the tallest contractor’s height.
+   */
+  fillGridCell?: boolean;
 }
 
 export default function ContractorCardBase({
@@ -57,9 +62,9 @@ export default function ContractorCardBase({
   isHighlighted = false,
   onHover,
   className = "",
+  fillGridCell = false,
 }: Props) {
   const href = `/contractor/${encodeURIComponent(data.licenseNumber)}`;
-  const signals = computeRiskSignals(data.trust);
   const trade = getTradeStyle(data.primaryTradeLabel);
   const TradeIcon = trade.icon;
 
@@ -67,19 +72,20 @@ export default function ContractorCardBase({
   // threshold keeps specialists & 2-3 trade cards visually calm.
   const showDots = data.classificationCount >= 4;
 
-  // Chrome: subtle gray-200 outline, thick colored left border, soft
-  // corner radius. When selected we overlay an accent-blue inset ring
-  // via box-shadow so the trade bar stays the dominant color anchor.
+  // Outer shell: flex row so the trade accent is a real column with
+  // rounded left corners (not a border-l square). Padding lives only on
+  // the inner column so the accent stays flush to the card edge.
   const shell = [
-    "group relative flex flex-col bg-white rounded-[12px] transition-all duration-150",
-    "border border-gray-200 border-l-4",
-    trade.borderLeft,
-    variant === "preview" ? "p-5 sm:p-6" : "p-6",
+    "group relative flex flex-row overflow-hidden rounded-[12px] bg-white transition-all duration-150",
+    "border border-gray-200",
+    fillGridCell ? "h-full" : "",
     isHighlighted
       ? "shadow-[inset_0_0_0_1.5px_theme(colors.accent.DEFAULT),0_4px_14px_rgba(79,124,172,0.15)]"
       : "hover:border-gray-300 hover:shadow-[0_2px_8px_rgba(15,23,42,0.04)]",
     className,
   ].join(" ");
+
+  const innerPad = variant === "preview" ? "p-5 sm:p-6" : "p-6";
 
   return (
     <article
@@ -92,44 +98,106 @@ export default function ContractorCardBase({
       <Link
         href={href}
         aria-label={`Open ${data.businessName} details`}
-        className="absolute inset-0 rounded-[12px] focus-brand"
+        className="absolute inset-0 z-0 rounded-[12px] focus-brand"
       />
 
-      {/* Top row: trade-icon column on the left, save button on the right.
-          The title + subtitle and everything below sits in the middle. */}
-      <div className="relative flex gap-3">
-        {/* Trade icon column — also hosts the overflow dot row. */}
-        <div className="flex flex-col items-center gap-2 shrink-0 pt-0.5">
-          <TradeIcon
-            size={20}
-            strokeWidth={2}
-            className={trade.text}
-            aria-hidden
-          />
-          {showDots ? (
-            <OverflowDots
-              tags={data.serviceTags}
-              primaryLabel={data.primaryTradeLabel}
-            />
-          ) : null}
-        </div>
+      {/* Trade color strip — rounded with card; pointer-events-none so
+          the overlay link still receives clicks. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none relative z-[1] w-1 shrink-0 self-stretch ${trade.dot} rounded-l-[12px]`}
+      />
 
-        <div className="min-w-0 flex-1 flex flex-col gap-3.5">
-          <Header data={data} />
+      <div
+        className={[
+          "relative z-[1] min-w-0 flex-1 flex flex-col",
+          fillGridCell ? "h-full min-h-0" : "",
+          innerPad,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {fillGridCell && variant === "detailed" ? (
+          <>
+            <div className="relative flex min-h-0 flex-1 gap-3">
+              <div className="flex flex-col items-center gap-2 shrink-0 pt-0.5">
+                <TradeIcon
+                  size={20}
+                  strokeWidth={2}
+                  className={trade.text}
+                  aria-hidden
+                />
+                {showDots ? (
+                  <OverflowDots
+                    tags={data.serviceTags}
+                    primaryLabel={data.primaryTradeLabel}
+                  />
+                ) : null}
+              </div>
 
-          {signals.length > 0 ? <RiskSignals signals={signals} /> : null}
+              <div className="min-w-0 flex-1 flex flex-col gap-3.5 min-h-0">
+                <Header data={data} />
+                <TrustBadgeRow
+                  contractor={{
+                    is_active: data.trust.active ?? false,
+                    has_workers_comp: data.trust.workersComp ?? false,
+                    has_contractor_bond: data.trust.bonded ?? false,
+                    has_pending_suspension: data.trust.pendingSuspension ?? false,
+                    has_disciplinary_history: data.trust.discipline ?? false,
+                  }}
+                />
+                {data.serviceTags.length > 0 ? (
+                  <ServiceTagsRow tags={data.serviceTags} />
+                ) : null}
+              </div>
+            </div>
 
-          {variant === "detailed" ? (
-            <>
-              {data.serviceTags.length > 0 ? (
-                <ServiceTagsRow tags={data.serviceTags} />
-              ) : null}
+            <div className="shrink-0 mt-auto pt-1">
               <MetaRow data={data} />
-            </>
-          ) : (
-            <PreviewMeta data={data} />
-          )}
-        </div>
+            </div>
+          </>
+        ) : (
+          <div className="relative flex gap-3">
+            <div className="flex flex-col items-center gap-2 shrink-0 pt-0.5">
+              <TradeIcon
+                size={20}
+                strokeWidth={2}
+                className={trade.text}
+                aria-hidden
+              />
+              {showDots ? (
+                <OverflowDots
+                  tags={data.serviceTags}
+                  primaryLabel={data.primaryTradeLabel}
+                />
+              ) : null}
+            </div>
+
+            <div className="min-w-0 flex-1 flex flex-col gap-3.5">
+              <Header data={data} />
+
+              {variant === "detailed" ? (
+                <>
+                  <TrustBadgeRow
+                    contractor={{
+                      is_active: data.trust.active ?? false,
+                      has_workers_comp: data.trust.workersComp ?? false,
+                      has_contractor_bond: data.trust.bonded ?? false,
+                      has_pending_suspension: data.trust.pendingSuspension ?? false,
+                      has_disciplinary_history: data.trust.discipline ?? false,
+                    }}
+                  />
+                  {data.serviceTags.length > 0 ? (
+                    <ServiceTagsRow tags={data.serviceTags} />
+                  ) : null}
+                  <MetaRow data={data} />
+                </>
+              ) : (
+                <PreviewMeta data={data} />
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -184,77 +252,6 @@ function OverflowDots({
     </div>
   );
 }
-
-/* ---------- Risk signals (exception-based) ---------- */
-
-type SignalTone = "warning" | "danger";
-interface RiskSignal {
-  key: string;
-  label: string;
-  tone: SignalTone;
-}
-
-function computeRiskSignals(trust: TrustFlags): RiskSignal[] {
-  const signals: RiskSignal[] = [];
-  if (trust.pendingSuspension) {
-    signals.push({
-      key: "suspension",
-      label: "Pending suspension",
-      tone: "danger",
-    });
-  }
-  if (!trust.active) {
-    signals.push({
-      key: "inactive",
-      label: "License inactive",
-      tone: "danger",
-    });
-  }
-  if (trust.discipline) {
-    signals.push({
-      key: "discipline",
-      label: "Disciplinary history",
-      tone: "warning",
-    });
-  }
-  if (!trust.workersComp) {
-    signals.push({
-      key: "wc",
-      label: "No workers' comp",
-      tone: "warning",
-    });
-  }
-  if (!trust.bonded) {
-    signals.push({
-      key: "bond",
-      label: "No bond on file",
-      tone: "warning",
-    });
-  }
-  return signals;
-}
-
-function RiskSignals({ signals }: { signals: RiskSignal[] }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {signals.map((s) => (
-        <span key={s.key} className={SIGNAL_CLS[s.tone]} title={s.label}>
-          {s.tone === "danger" ? (
-            <OctagonAlert size={11} strokeWidth={2.25} aria-hidden />
-          ) : (
-            <AlertTriangle size={11} strokeWidth={2.25} aria-hidden />
-          )}
-          {s.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-const SIGNAL_CLS: Record<SignalTone, string> = {
-  warning: "signal-warning",
-  danger: "signal-danger",
-};
 
 /* ---------- Sub-sections ---------- */
 

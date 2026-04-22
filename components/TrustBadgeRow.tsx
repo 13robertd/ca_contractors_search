@@ -15,6 +15,8 @@ interface BadgeProps {
   label: string;
   tone: Tone;
   title?: string;
+  /** When set, overrides the default glyph for this tone. */
+  glyph?: string;
 }
 
 const TONE_CLS: Record<Tone, string> = {
@@ -24,40 +26,85 @@ const TONE_CLS: Record<Tone, string> = {
   danger: "badge-danger",
 };
 
-function Badge({ label, tone, title }: BadgeProps) {
-  const glyph =
-    tone === "positive" ? "✓" : tone === "danger" || tone === "warning" ? "!" : "–";
+function Badge({ label, tone, title, glyph }: BadgeProps) {
+  const defaultGlyph =
+    tone === "positive"
+      ? "✓"
+      : tone === "danger"
+        ? "!"
+        : tone === "warning"
+          ? "⚠"
+          : "–";
+  const g = glyph ?? defaultGlyph;
   return (
     <span className={TONE_CLS[tone]} title={title ?? label}>
-      <span className="font-semibold">{glyph}</span>
+      <span className="font-semibold">{g}</span>
       {label}
     </span>
   );
 }
 
+/**
+ * Full trust strip for listing cards: green checks for good standing on
+ * Active / Workers' Comp / Bonded, amber warnings when coverage is
+ * missing, discipline called out, pending suspension as danger.
+ */
 export default function TrustBadgeRow({ contractor }: { contractor: Subset }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      <Badge
-        label="Active"
-        tone={contractor.is_active ? "positive" : "neutral"}
-        title="Currently active license"
-      />
-      <Badge
-        label="Workers' Comp"
-        tone={contractor.has_workers_comp ? "positive" : "neutral"}
-        title="Workers' compensation insurance on file"
-      />
-      <Badge
-        label="Bonded"
-        tone={contractor.has_contractor_bond ? "positive" : "neutral"}
-        title="Contractor bond on file"
-      />
+      {contractor.is_active ? (
+        <Badge label="Active" tone="positive" title="Currently active license" />
+      ) : (
+        <Badge
+          label="License inactive"
+          tone="danger"
+          title="License is not active"
+        />
+      )}
+
+      {contractor.has_workers_comp ? (
+        <Badge
+          label="Workers' Comp"
+          tone="positive"
+          title="Workers' compensation insurance on file"
+        />
+      ) : (
+        <Badge
+          label="No workers' comp"
+          tone="warning"
+          title="No workers' compensation on file"
+        />
+      )}
+
+      {contractor.has_contractor_bond ? (
+        <Badge
+          label="Bonded"
+          tone="positive"
+          title="Contractor bond on file"
+        />
+      ) : (
+        <Badge
+          label="No bond on file"
+          tone="warning"
+          title="No contractor bond on file"
+        />
+      )}
+
       {contractor.has_disciplinary_history ? (
-        <Badge label="Discipline" tone="warning" title="Has disciplinary history" />
+        <Badge
+          label="Discipline"
+          tone="warning"
+          glyph="!"
+          title="Has disciplinary history"
+        />
       ) : null}
+
       {contractor.has_pending_suspension ? (
-        <Badge label="Pending Suspension" tone="danger" title="Has pending suspension" />
+        <Badge
+          label="Pending Suspension"
+          tone="danger"
+          title="Has pending suspension"
+        />
       ) : null}
     </div>
   );

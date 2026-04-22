@@ -197,3 +197,63 @@ export function getTradeStyle(trade: string | null | undefined): TradeStyle {
   });
   return hit ? TRADE_COLORS[hit] : DEFAULT_TRADE;
 }
+
+/**
+ * Hex fill colors aligned with Tailwind palette classes in TRADE_COLORS
+ * (for Mapbox / canvas — map libs cannot consume Tailwind class strings).
+ * Keys mirror `TRADE_COLORS` object keys.
+ */
+export const TRADE_HEX: Record<string, string> = {
+  Plumbing: "#3b82f6", // blue-500
+  Electrical: "#eab308", // yellow-500
+  Roofing: "#ef4444", // red-500
+  "Warm-Air Heating, Ventilating and Air-Conditioning": "#f97316", // orange-500
+  "Painting and Decorating": "#a855f7", // purple-500
+  Landscaping: "#22c55e", // green-500
+  "Flooring and Floor Covering": "#d97706", // amber-600
+  Concrete: "#71717a", // zinc-500
+  Drywall: "#737373", // neutral-500
+  "General Building": "#64748b", // slate-500
+  "General Engineering": "#78716c", // stone-500
+};
+
+export const DEFAULT_TRADE_HEX = "#9ca3af"; // gray-400
+
+/** Hex fill matching {@link getTradeStyle} resolution. */
+export function getTradeHex(trade: string | null | undefined): string {
+  if (!trade) return DEFAULT_TRADE_HEX;
+  if (TRADE_HEX[trade]) return TRADE_HEX[trade];
+  const resolved = getTradeStyle(trade);
+  const key = Object.keys(TRADE_COLORS).find(
+    (k) => TRADE_COLORS[k].label === resolved.label
+  );
+  if (key && TRADE_HEX[key]) return TRADE_HEX[key];
+  const needle = trade.toLowerCase().trim();
+  const hit = Object.keys(TRADE_HEX).find((k) => {
+    const kk = k.toLowerCase();
+    return needle.includes(kk) || kk.includes(needle);
+  });
+  return hit ? TRADE_HEX[hit] : DEFAULT_TRADE_HEX;
+}
+
+/**
+ * Canonical `TRADE_COLORS` key for a raw `primary_trade` string (for
+ * stable pin sprite ids). Falls back to the first label match or null.
+ */
+export function getTradePaletteKey(
+  trade: string | null | undefined
+): keyof typeof TRADE_COLORS | null {
+  if (!trade) return null;
+  if (TRADE_COLORS[trade]) return trade as keyof typeof TRADE_COLORS;
+  const resolved = getTradeStyle(trade);
+  const key = Object.keys(TRADE_COLORS).find(
+    (k) => TRADE_COLORS[k].label === resolved.label
+  ) as keyof typeof TRADE_COLORS | undefined;
+  if (key) return key;
+  const needle = trade.toLowerCase().trim();
+  const hit = Object.keys(TRADE_COLORS).find((k) => {
+    const kk = k.toLowerCase();
+    return needle.includes(kk) || kk.includes(needle);
+  }) as keyof typeof TRADE_COLORS | undefined;
+  return hit ?? null;
+}

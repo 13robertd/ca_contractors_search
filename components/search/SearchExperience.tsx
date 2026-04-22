@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import MarketplaceSearchBar from "./MarketplaceSearchBar";
+import SearchCategoryStrip from "./SearchCategoryStrip";
 import ResultsHeader from "./ResultsHeader";
 import ContractorList from "./ContractorList";
 import ContractorMap from "./ContractorMap";
@@ -86,6 +87,8 @@ export default function SearchExperience({ listings, initial }: Props) {
           />
         </div>
 
+        <SearchCategoryStrip />
+
         {/* Mobile list/map toggle */}
         <div className="lg:hidden border-t border-line-subtle">
           <div className="page-container py-2 flex items-center gap-2">
@@ -159,6 +162,7 @@ export default function SearchExperience({ listings, initial }: Props) {
                 onBoundsChange={handleBoundsChange}
                 onMarkerHover={handleHover}
                 onMarkerSelect={handleMarkerSelect}
+                onClearSelection={() => setSelectedId(null)}
                 emitBoundsOnMove={searchOnMove}
               />
               {visibleListings.length === 0 && bounds ? (

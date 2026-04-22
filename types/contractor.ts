@@ -37,7 +37,12 @@ export interface Contractor {
   search_blob: string | null;
 }
 
-/** Columns required for the card/list view. Keep minimal for fast reads. */
+/**
+ * Columns required for the card/list view. Keep minimal for fast reads.
+ * Any future homepage server fetch must use this same select (or `*`) so
+ * trust badges match /search — includes is_active, has_workers_comp,
+ * has_contractor_bond, has_disciplinary_history, has_pending_suspension.
+ */
 export const CONTRACTOR_CARD_COLUMNS = [
   "license_number",
   "business_name",

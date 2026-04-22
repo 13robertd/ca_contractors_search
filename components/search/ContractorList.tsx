@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import ContractorCardBase from "@/components/cards/ContractorCardBase";
+import ContractorCard from "@/components/ContractorCard";
 import { cardDataFromContractor } from "@/lib/cardData";
 import type { ContractorListing } from "@/lib/listings";
 import type { TradeSlug } from "@/lib/trades";
@@ -18,7 +18,7 @@ interface Props {
 }
 
 /**
- * The /search results list. Renders the shared ContractorCardBase in
+ * The /search results list. Renders the shared ContractorCard in
  * detailed density. The accent-blue "highlighted" ring on each card is
  * driven by either map-marker hover or map-marker selection coming from
  * the SearchExperience parent.
@@ -60,10 +60,9 @@ export default function ContractorList({
       className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"
     >
       {listings.map((l) => (
-        <ContractorCardBase
+        <ContractorCard
           key={l.license_number}
           data={cardDataFromContractor(l, { searchTrade })}
-          variant="detailed"
           isHighlighted={
             highlightedId === l.license_number ||
             selectedId === l.license_number

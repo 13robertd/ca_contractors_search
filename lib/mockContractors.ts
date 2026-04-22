@@ -264,6 +264,16 @@ export const MOCK_CONTRACTORS: MockContractor[] = RAW.map((r) => ({
  * suspension_reason, etc.) and are filled with null or sensible
  * defaults. The detail page already handles null gracefully.
  */
+/**
+ * Deterministic fake 10-digit phone for mocks so listing cards can show
+ * the same PHONE row as /search. Not a real number — 650-555-xxxx pattern.
+ */
+export function mockPhoneFromLicense(licenseNumber: string): string {
+  const digits = licenseNumber.replace(/\D/g, "");
+  const tail = (digits.slice(-4) || "0000").padStart(4, "0");
+  return `650555${tail}`;
+}
+
 export function mockContractorToContractor(m: MockContractor): Contractor {
   const classificationLabels = m.classifications.map((code) => {
     const label = TRADE_TAXONOMY[tradeFromClass(code)].label;
@@ -282,7 +292,7 @@ export function mockContractorToContractor(m: MockContractor): Contractor {
     state: "CA",
     zip_code: null,
     county: "San Mateo",
-    phone: null,
+    phone: mockPhoneFromLicense(m.licenseNumber),
     business_type: null,
     classification_codes: m.classifications,
     classification_labels: classificationLabels,
