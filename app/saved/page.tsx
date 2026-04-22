@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import ContractorCard from "@/components/ContractorCard";
+import ContractorCardBase from "@/components/cards/ContractorCardBase";
 import { ContractorListSkeleton } from "@/components/Skeleton";
 import { getSavedLicenses } from "@/lib/savedContractors";
+import { cardDataFromContractor } from "@/lib/cardData";
 import type { Contractor } from "@/types/contractor";
 
 export default function SavedPage() {
@@ -87,9 +88,13 @@ export default function SavedPage() {
         ) : contractors.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {contractors.map((c) => (
-              <ContractorCard key={c.license_number} contractor={c} dense />
+              <ContractorCardBase
+                key={c.license_number}
+                data={cardDataFromContractor(c)}
+                variant="detailed"
+              />
             ))}
           </div>
         )}

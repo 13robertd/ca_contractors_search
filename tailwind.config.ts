@@ -10,6 +10,10 @@ const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
+    // Trade palette classes (`border-l-blue-500`, `text-blue-700`, …) live
+    // in lib/trade-colors.ts as string literals — Tailwind must scan `lib/`
+    // or those utilities never ship to CSS (cards look unstyled).
+    "./lib/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
@@ -49,6 +53,23 @@ const config: Config = {
           DEFAULT: "#4F7CAC",
           hover:   "#3E6995",
         },
+        // Soft-blue accent — primary interactive color across the app.
+        // Used for: card selection ring, save-active state, focus rings,
+        // search submit, phone CTAs, map "selected" marker. Replaces the
+        // earlier crimson-as-action treatment so red is reserved strictly
+        // for warnings/errors.
+        accent: {
+          DEFAULT: "#4F7CAC",
+          hover:   "#2F5D8C",
+          50:      "#EEF3F9",   // softest tint — chip backgrounds, hover wash
+          100:     "#D9E4F1",   // ring/halo behind selected cards
+        },
+        // Service-tag palette — distinct from trust badges so license
+        // classifications read as quieter metadata, not legitimacy claims.
+        tag: {
+          bg:   "#F1F5F9",
+          text: "#475569",
+        },
         // License-card credential tile palette
         credential: {
           DEFAULT: "#1E1B1A",
@@ -72,17 +93,20 @@ const config: Config = {
           500: "#10B981",
           700: "#047857",
         },
+        // Warning + critical tones for exception-based card signals.
+        // Only ever rendered when something is wrong (discipline, missing
+        // insurance, expired license, etc.) — clean cards stay neutral.
         warning: {
-          50:  "#FFFBEB",
+          50:  "#FEF3C7",  // brief: warning bg
           200: "#FDE68A",
           500: "#F59E0B",
-          700: "#B45309",
+          700: "#B45309",  // brief: warning text
         },
         danger: {
-          50:  "#FEF2F2",
+          50:  "#FEE2E2",  // brief: critical bg
           200: "#FECACA",
           500: "#EF4444",
-          700: "#B91C1C",
+          700: "#991B1B",  // brief: critical text
         },
       },
       fontFamily: {

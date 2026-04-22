@@ -9,6 +9,14 @@ import MapSummaryCard from "./MapSummaryCard";
 import { PillButton } from "@/components/ui";
 import type { ContractorListing } from "@/lib/listings";
 import { isInBounds, type Bounds } from "@/lib/geo";
+import { TRADE_TAXONOMY, type TradeSlug } from "@/lib/trades";
+
+/** A trade URL param is "valid" iff it maps to a known TradeSlug —
+ *  guards against arbitrary strings being treated as trade slugs. */
+function asTradeSlug(value: string | undefined | null): TradeSlug | null {
+  if (!value) return null;
+  return value in TRADE_TAXONOMY ? (value as TradeSlug) : null;
+}
 
 interface Props {
   listings: ContractorListing[];
@@ -66,7 +74,7 @@ export default function SearchExperience({ listings, initial }: Props) {
   const noGeoData = listings.every((l) => l.latitude == null);
 
   return (
-    <div className="bg-white min-h-[calc(100vh-4rem)]">
+    <div className="bg-surface-subtle min-h-[calc(100vh-4rem)]">
       {/* Sticky search/filter bar */}
       <div className="sticky top-16 z-20 bg-white/95 backdrop-blur border-b border-line-subtle">
         <div className="page-container py-4">
@@ -123,6 +131,7 @@ export default function SearchExperience({ listings, initial }: Props) {
             highlightedId={highlightedId}
             selectedId={selectedId}
             onHover={handleHover}
+            searchTrade={asTradeSlug(initial.trade)}
           />
 
           {noGeoData ? (

@@ -12,6 +12,7 @@ import {
 import TrustBadgeRow from "@/components/TrustBadgeRow";
 import ClassificationTags from "@/components/ClassificationTags";
 import SaveContractorButton from "@/components/SaveContractorButton";
+import { getTradeStyle } from "@/lib/trade-colors";
 
 /**
  * Contractor detail page. Server component — fetches the contractor row
@@ -116,6 +117,12 @@ export default async function ContractorDetailPage({ params }: PageProps) {
     .filter(Boolean)
     .join(", ");
 
+  // Trade color for the header's left border + icon — same palette
+  // driving the card grid on /search, so a blue card leads to a
+  // blue-anchored detail page.
+  const trade = getTradeStyle(c.primary_trade);
+  const TradeIcon = trade.icon;
+
   return (
     <div className="bg-white min-h-[calc(100vh-4rem)]">
       <div className="page-container max-w-4xl py-6 sm:py-10">
@@ -129,12 +136,22 @@ export default async function ContractorDetailPage({ params }: PageProps) {
         </Link>
 
         {/* ============== Header ============== */}
-        <header className="rounded-[12px] border border-line-subtle bg-white p-6 sm:p-8">
+        <header
+          className={`rounded-[12px] border border-gray-200 border-l-4 ${trade.borderLeft} bg-white p-6 sm:p-8`}
+        >
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0 flex-1">
-              <h1 className="text-[28px] sm:text-[32px] font-medium text-ink-hero tracking-[-0.3px] leading-tight">
-                {c.business_name}
-              </h1>
+              <div className="flex items-center gap-2">
+                <TradeIcon
+                  size={22}
+                  strokeWidth={2}
+                  className={trade.text}
+                  aria-hidden
+                />
+                <h1 className="text-[28px] sm:text-[32px] font-medium text-ink-hero tracking-[-0.3px] leading-tight">
+                  {c.business_name}
+                </h1>
+              </div>
               {c.full_business_name &&
               c.full_business_name !== c.business_name ? (
                 <p className="mt-1 text-[14px] text-ink-secondary">
@@ -164,7 +181,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
               {telHref ? (
                 <a
                   href={telHref}
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-brand hover:bg-brand-hover text-white text-[14px] font-medium transition-colors focus-brand"
+                  className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent hover:bg-accent-hover text-white text-[14px] font-medium transition-colors focus-brand"
                 >
                   <Phone size={14} strokeWidth={2.25} aria-hidden />
                   {formatPhone(c.phone)}
@@ -187,7 +204,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
             href={publicRecordUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-5 inline-flex items-center gap-1.5 text-[13px] text-ink-hero hover:text-brand transition-colors focus-brand rounded-sm"
+            className="mt-5 inline-flex items-center gap-1.5 text-[13px] text-ink-hero hover:text-accent transition-colors focus-brand rounded-sm"
           >
             View public record
             <ExternalLink size={13} strokeWidth={2} aria-hidden />
@@ -257,7 +274,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
               {telHref ? (
                 <a
                   href={telHref}
-                  className="text-ink-hero hover:text-brand transition-colors focus-brand rounded-sm"
+                  className="text-ink-hero hover:text-accent transition-colors focus-brand rounded-sm"
                 >
                   {formatPhone(c.phone)}
                 </a>
@@ -283,7 +300,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
                 href={publicRecordUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-ink-hero hover:text-brand underline underline-offset-2 transition-colors focus-brand rounded-sm"
+                className="inline-flex items-center gap-1 text-ink-hero hover:text-accent underline underline-offset-2 transition-colors focus-brand rounded-sm"
               >
                 View full details on the CSLB public record
                 <ExternalLink size={12} strokeWidth={2} aria-hidden />

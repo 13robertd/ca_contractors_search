@@ -51,8 +51,11 @@ app/                         ← routes + layouts
   layout.tsx                             ← Fixd header/footer, Inter font
   page.tsx, globals.css
 components/                  ← reusable UI
-  SearchBar, ContractorCard, FilterPanel, StatusBadge,
-  TrustBadgeRow, SaveContractorButton, ClassificationTags, Skeleton
+  cards/ContractorCardBase.tsx   ← ⭐ THE contractor card (preview | detailed)
+  home/                          ← homepage (CategoryStrip, HomePageClient, sections)
+  search/                        ← /search (map + list + filters)
+  ui/                            ← shared primitives (SearchPill, IconButton, PillButton…)
+  TrustBadgeRow, SaveContractorButton, ClassificationTags, Skeleton, SiteHeader, SiteFooter
 lib/
   supabase.ts                ← lazy anon-key Supabase client singleton
   queries.ts                 ← ⭐ ALL Supabase read queries live here
@@ -149,7 +152,7 @@ This is the heart of the app. Please scrutinize:
 
 `statusKind()` is the single source of truth for the colored status pill. If
 you change what "warning" vs "inactive" means, it ripples through
-`StatusBadge`, `ContractorCard`, and the detail page. Keep that mapping
+`TrustBadgeRow`, `ContractorCardBase`, and the detail page. Keep that mapping
 consistent.
 
 ### 4. Hydration-sensitive areas

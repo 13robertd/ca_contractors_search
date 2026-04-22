@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import ContractorCard from "@/components/home/ContractorCard";
+import ContractorCardBase from "@/components/cards/ContractorCardBase";
 import ContractorSection from "@/components/home/ContractorSection";
 import CategoryStrip, {
   CATEGORIES,
@@ -11,6 +11,7 @@ import CategoryStrip, {
 } from "@/components/home/CategoryStrip";
 import HomeSearchBar from "@/components/home/HomeSearchBar";
 import { MOCK_CONTRACTORS, type MockContractor } from "@/lib/mockContractors";
+import { cardDataFromMock } from "@/lib/cardData";
 
 const VALID_CATEGORIES = new Set(CATEGORIES.map((c) => c.id));
 
@@ -128,26 +129,22 @@ export default function HomePageClient({ popularCity }: Props) {
               title={`Established Plumbing In ${CITY}`}
               contractors={plumbingSection}
               seeAllHref="/search?trade=plumbing&sort=yearsDesc"
-              variant="trade"
             />
             <ContractorSection
               title={`Established General Contractors in ${CITY}`}
               contractors={generalSection}
               seeAllHref="/search?trade=general&sort=yearsDesc"
-              variant="trade"
             />
             <ContractorSection
               title={`Established Electrical In ${CITY}`}
               contractors={electricalSection}
               seeAllHref="/search?trade=electrical&sort=yearsDesc"
-              variant="trade"
             />
             <ContractorSection
               title={`Newly Licensed in ${CITY}`}
               subtitle="Recent additions to the CSLB registry"
               contractors={newlyLicensedSection}
               seeAllHref="/search?sort=newestFirst"
-              variant="trade"
             />
           </div>
         </section>
@@ -168,11 +165,10 @@ export default function HomePageClient({ popularCity }: Props) {
             ) : (
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {mainGrid.map((c) => (
-                  <ContractorCard
+                  <ContractorCardBase
                     key={c.licenseNumber}
-                    contractor={c}
-                    variant="trade"
-                    size="default"
+                    data={cardDataFromMock(c)}
+                    variant="preview"
                   />
                 ))}
               </div>

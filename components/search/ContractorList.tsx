@@ -1,21 +1,34 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import MarketplaceCard from "./MarketplaceCard";
+import ContractorCardBase from "@/components/cards/ContractorCardBase";
+import { cardDataFromContractor } from "@/lib/cardData";
 import type { ContractorListing } from "@/lib/listings";
+import type { TradeSlug } from "@/lib/trades";
 
 interface Props {
   listings: ContractorListing[];
   highlightedId: string | null;
   selectedId: string | null;
   onHover: (id: string | null) => void;
+  /** Active trade filter from the URL (?trade=plumbing). Promotes the
+   *  matching trade to "primary" on each card so the accent bar and
+   *  subtitle reflect what the user actually searched for. */
+  searchTrade?: TradeSlug | null;
 }
 
+/**
+ * The /search results list. Renders the shared ContractorCardBase in
+ * detailed density. The accent-blue "highlighted" ring on each card is
+ * driven by either map-marker hover or map-marker selection coming from
+ * the SearchExperience parent.
+ */
 export default function ContractorList({
   listings,
   highlightedId,
   selectedId,
   onHover,
+  searchTrade,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -47,16 +60,16 @@ export default function ContractorList({
       className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"
     >
       {listings.map((l) => (
-        <div key={l.license_number} data-license={l.license_number}>
-          <MarketplaceCard
-            listing={l}
-            isHighlighted={
-              highlightedId === l.license_number ||
-              selectedId === l.license_number
-            }
-            onHover={onHover}
-          />
-        </div>
+        <ContractorCardBase
+          key={l.license_number}
+          data={cardDataFromContractor(l, { searchTrade })}
+          variant="detailed"
+          isHighlighted={
+            highlightedId === l.license_number ||
+            selectedId === l.license_number
+          }
+          onHover={onHover}
+        />
       ))}
     </div>
   );

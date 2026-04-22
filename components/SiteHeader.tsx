@@ -90,7 +90,7 @@ export default function SiteHeader() {
               <span className="text-[14px] text-ink-secondary">
                 Any trade
               </span>
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white">
                 <Search size={14} strokeWidth={2.5} />
               </span>
             </button>

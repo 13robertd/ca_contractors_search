@@ -8,11 +8,12 @@ import { forwardRef } from "react";
  *
  * Tones:
  *   neutral  white surface + line-subtle border (default)
- *   brand    crimson surface, white icon (used for "saved" active state)
+ *   accent   soft-blue surface, white icon (used for "saved" active state)
+ *   brand    crimson surface, white icon (kept for legacy call sites)
  *   ghost    transparent, no border, hover → surface-subtle
  */
 
-type Tone = "neutral" | "brand" | "ghost";
+type Tone = "neutral" | "accent" | "brand" | "ghost";
 type Size = "sm" | "md";
 
 interface Props
@@ -30,6 +31,8 @@ const SIZE_CLS: Record<Size, string> = {
 const TONE_CLS: Record<Tone, string> = {
   neutral:
     "bg-white border border-line-subtle text-ink-hero hover:bg-surface-subtle",
+  accent:
+    "bg-accent border border-accent text-white hover:bg-accent-hover",
   brand:
     "bg-brand border border-brand text-white hover:bg-brand-hover",
   ghost: "bg-transparent text-ink-hero hover:bg-surface-subtle",

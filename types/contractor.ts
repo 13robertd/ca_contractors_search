@@ -53,5 +53,8 @@ export const CONTRACTOR_CARD_COLUMNS = [
   "has_contractor_bond",
   "has_pending_suspension",
   "has_disciplinary_history",
+  // classification_codes drives trade-color resolution on the card
+  // (left accent bar + trade chips). Cheap to fetch — text[].
+  "classification_codes",
   "classification_labels",
 ].join(",");

@@ -39,12 +39,13 @@ export default function SaveContractorButton({
   const active = mounted && saved;
 
   if (variant === "icon") {
-    // Home/search shared 32×32 circle-icon-button: neutral by default,
-    // brand-red fill when saved.
+    // Home/search shared 32×32 circle-icon-button. "Saved" is a selection
+    // state, so we use the soft-blue accent — red is reserved for true
+    // warnings/errors per the brand system.
     return (
       <IconButton
         size="sm"
-        tone={active ? "brand" : "neutral"}
+        tone={active ? "accent" : "neutral"}
         onClick={onClick}
         aria-pressed={active}
         aria-label={active ? "Unsave contractor" : "Save contractor"}
@@ -61,7 +62,7 @@ export default function SaveContractorButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`btn ${active ? "bg-ink text-white hover:bg-fixd-hover" : "bg-white border border-line text-ink hover:bg-surface-subtle"} ${className}`}
+      className={`btn ${active ? "bg-accent text-white hover:bg-accent-hover" : "bg-white border border-line text-ink hover:bg-surface-subtle"} ${className}`}
     >
       <BookmarkIcon filled={active} />
       <span>{active ? "Saved" : "Save"}</span>

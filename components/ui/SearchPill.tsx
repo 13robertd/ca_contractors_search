@@ -89,7 +89,7 @@ export default function SearchPill({
             type="submit"
             aria-label={submitAriaLabel}
             disabled={submitDisabled}
-            className={`inline-flex items-center justify-center ${btnSize} rounded-full bg-brand hover:bg-brand-hover text-white transition-colors focus-brand disabled:opacity-60`}
+            className={`inline-flex items-center justify-center ${btnSize} rounded-full bg-accent hover:bg-accent-hover text-white transition-colors focus-brand disabled:opacity-60`}
           >
             <Search size={iconSize} strokeWidth={2.5} />
           </button>

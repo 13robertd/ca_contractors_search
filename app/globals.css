@@ -107,6 +107,26 @@ body {
   .badge-warning  { @apply badge bg-warning-50 text-warning-700 ring-warning-200; }
   .badge-danger   { @apply badge bg-danger-50 text-danger-700 ring-danger-200; }
 
+  /* Service tags — license classifications. Visually lighter than risk
+   * signals so they read as secondary metadata rather than claims. No
+   * border, no ring, softer text color, slightly tighter than badges. */
+  .tag {
+    @apply inline-flex items-center h-[22px] px-1.5 rounded-[4px]
+           text-[11px] font-medium leading-none
+           bg-tag-bg text-tag-text;
+  }
+
+  /* Risk signals — exception-based chips that flag problems on a card
+   * (discipline, inactive license, missing workers' comp, missing bond,
+   * pending suspension). Slightly stronger than .tag so the eye lands
+   * here first when scanning a list. Always paired with an icon. */
+  .signal {
+    @apply inline-flex items-center gap-1 h-6 px-2 rounded-md
+           text-[11px] font-medium leading-none;
+  }
+  .signal-warning { @apply signal bg-warning-50 text-warning-700; }
+  .signal-danger  { @apply signal bg-danger-50  text-danger-700; }
+
   /* Status dot (used inline) */
   .status-dot { @apply inline-block h-1.5 w-1.5 rounded-full; }
 
@@ -132,9 +152,11 @@ body {
 
   /* ---------- Homepage (Airbnb-style) utilities ---------- */
 
-  /* Brand focus ring — 2px crimson w/ 2px offset per spec. */
+  /* Brand focus ring — 2px soft-blue accent w/ 2px offset. Renamed in
+   * intent (was crimson), kept the class name to avoid churn across the
+   * app; red is now reserved for warnings only. */
   .focus-brand {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
   }
 
   /* Hide scrollbar but keep scrollability (category strip). */
@@ -190,8 +212,8 @@ body {
 .cm-marker[data-active="true"] .cm-dot {
   width: 18px;
   height: 18px;
-  background: #B91C1C;
+  background: #4F7CAC;
   border-color: #ffffff;
-  box-shadow: 0 0 0 2px #B91C1C, 0 2px 6px rgba(185, 28, 28, 0.3);
+  box-shadow: 0 0 0 2px #4F7CAC, 0 2px 6px rgba(79, 124, 172, 0.3);
   transform: scale(1);
 }

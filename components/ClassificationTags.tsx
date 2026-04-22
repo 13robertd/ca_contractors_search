@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getTradeStyle } from "@/lib/trade-colors";
 
 interface Props {
   labels?: string[] | null;
@@ -15,6 +16,12 @@ function prettyLabel(label: string): string {
   return label.replace(/\s+Contractor\s*$/i, "").trim() || label;
 }
 
+/**
+ * Classification pills on the contractor detail page. Each pill pulls
+ * from the shared trade palette (lib/trade-colors.ts) so the same
+ * color language from the search card carries through to the detail
+ * view — plumbers stay blue, roofers stay red, etc.
+ */
 export default function ClassificationTags({ labels, max, expandable }: Props) {
   const list = labels ?? [];
   const [expanded, setExpanded] = useState(false);
@@ -30,11 +37,18 @@ export default function ClassificationTags({ labels, max, expandable }: Props) {
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {shown.map((label) => (
-        <span key={label} className="chip" title={label}>
-          {prettyLabel(label)}
-        </span>
-      ))}
+      {shown.map((label) => {
+        const style = getTradeStyle(label);
+        return (
+          <span
+            key={label}
+            className={`inline-flex items-center h-6 px-2 rounded-sm text-[11px] font-medium leading-none ${style.bg} ${style.text}`}
+            title={label}
+          >
+            {prettyLabel(label)}
+          </span>
+        );
+      })}
 
       {shouldTruncate && expandable ? (
         <button
@@ -45,12 +59,14 @@ export default function ClassificationTags({ labels, max, expandable }: Props) {
             setExpanded((v) => !v);
           }}
           aria-expanded={expanded}
-          className="chip bg-white hover:bg-canvas hover:border-line-strong relative z-10 transition-colors"
+          className="relative z-10 inline-flex items-center h-6 px-2 rounded-sm text-[11px] font-medium leading-none bg-white border border-gray-200 text-ink-secondary hover:border-gray-300 transition-colors"
         >
           {expanded ? "Show less" : `+${remaining} more`}
         </button>
       ) : remaining > 0 ? (
-        <span className="chip bg-white">+{remaining} more</span>
+        <span className="inline-flex items-center h-6 px-2 rounded-sm text-[11px] font-medium leading-none bg-white border border-gray-200 text-ink-secondary">
+          +{remaining} more
+        </span>
       ) : null}
     </div>
   );

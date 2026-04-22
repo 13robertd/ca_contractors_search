@@ -1,10 +1,9 @@
 /**
- * Trade palette + taxonomy. Single source of truth.
+ * Trade taxonomy — the non-visual side of the trade system.
  *
- * - `TRADE_COLORS` — the 8 trade slugs mapped to:
- *     bar:  saturated color for the 6px top color bar on trade-variant cards
- *     text: darker shade for icons and the number-hero
- *     tint: very pale wash used as the canvas for Specialist cards
+ * - `TRADE_TAXONOMY` — the 8 trade slugs → `{ label, icon }`. Visual
+ *   colors are defined separately in `lib/trade-colors.ts` so the
+ *   taxonomy stays stable even if the palette is retuned.
  *
  * - `CLASS_TO_TRADE` — maps CSLB classification codes (C-36, C-10, B, …)
  *   to trade slugs.
@@ -16,9 +15,7 @@
  *   implied by the classifications (skipping "B" for primary-trade
  *   purposes; a Generalist's primary is still a C-class when present).
  *
- * NEVER use crimson (#B91C1C) here — that color is reserved for actions
- * (wordmark, CTA, search button, saved-heart). Trades must not collide
- * with it.
+ * For the card/chip/filter colors, import from `lib/trade-colors.ts`.
  */
 
 import {
@@ -45,76 +42,26 @@ export type TradeSlug =
 
 export type ContractorType = "specialist" | "skilled" | "generalist";
 
-export interface TradeColor {
-  /** Color used in the 6px top color bar (saturated). */
-  bar: string;
-  /** Color used for icons + number-hero (darker, AA-safe on light canvas). */
-  text: string;
-  /** Very pale wash used as Specialist card canvas. */
-  tint: string;
-  /** Short, human label for subtitles/chips. */
+export interface TradeTaxonomyEntry {
+  /** Short, human label — also the lookup key into `lib/trade-colors.ts`. */
   label: string;
-  /** lucide-react icon. */
+  /** lucide-react icon — kept in sync with the palette icon by convention. */
   icon: LucideIcon;
 }
 
-export const TRADE_COLORS: Record<TradeSlug, TradeColor> = {
-  plumbing: {
-    bar: "#378ADD",
-    text: "#0C447C",
-    tint: "#E6F1FB",
-    label: "Plumbing",
-    icon: Droplet,
-  },
-  electrical: {
-    bar: "#EF9F27",
-    text: "#633806",
-    tint: "#FDF2DF",
-    label: "Electrical",
-    icon: Zap,
-  },
-  hvac: {
-    bar: "#1D9E75",
-    text: "#0F6E56",
-    tint: "#E0F2EB",
-    label: "HVAC",
-    icon: Snowflake,
-  },
-  roofing: {
-    bar: "#D85A30",
-    text: "#712B13",
-    tint: "#FBE7DD",
-    label: "Roofing",
-    icon: Home,
-  },
-  painting: {
-    bar: "#7F77DD",
-    text: "#3C3489",
-    tint: "#ECEAF8",
-    label: "Painting",
-    icon: PaintBucket,
-  },
-  landscape: {
-    bar: "#97C459",
-    text: "#27500A",
-    tint: "#EDF5DF",
-    label: "Landscape",
-    icon: Trees,
-  },
-  flooring: {
-    bar: "#D4537E",
-    text: "#72243E",
-    tint: "#FAE1EB",
-    label: "Flooring",
-    icon: Layers,
-  },
-  general: {
-    bar: "#888780",
-    text: "#2C2C2A",
-    tint: "#EEEDEA",
-    label: "General",
-    icon: Briefcase,
-  },
+/**
+ * Slug → display label + icon. Colors intentionally live elsewhere —
+ * see `lib/trade-colors.ts`.
+ */
+export const TRADE_TAXONOMY: Record<TradeSlug, TradeTaxonomyEntry> = {
+  plumbing:   { label: "Plumbing",    icon: Droplet    },
+  electrical: { label: "Electrical",  icon: Zap        },
+  hvac:       { label: "HVAC",        icon: Snowflake  },
+  roofing:    { label: "Roofing",     icon: Home       },
+  painting:   { label: "Painting",    icon: PaintBucket},
+  landscape:  { label: "Landscape",   icon: Trees      },
+  flooring:   { label: "Flooring",    icon: Layers     },
+  general:    { label: "General",     icon: Briefcase  },
 };
 
 /**

@@ -16,7 +16,7 @@ import {
   deriveType,
   primaryTradeFor,
   tradeFromClass,
-  TRADE_COLORS,
+  TRADE_TAXONOMY,
   type ContractorType,
   type TradeSlug,
 } from "./trades";
@@ -266,11 +266,11 @@ export const MOCK_CONTRACTORS: MockContractor[] = RAW.map((r) => ({
  */
 export function mockContractorToContractor(m: MockContractor): Contractor {
   const classificationLabels = m.classifications.map((code) => {
-    const label = TRADE_COLORS[tradeFromClass(code)].label;
+    const label = TRADE_TAXONOMY[tradeFromClass(code)].label;
     return `${code} ${label} Contractor`;
   });
   const issueYear = Number.parseInt(m.issueDate.slice(0, 4), 10);
-  const primaryTradeLabel = TRADE_COLORS[m.primaryTrade].label;
+  const primaryTradeLabel = TRADE_TAXONOMY[m.primaryTrade].label;
   const isActive = m.status === "active";
 
   return {
