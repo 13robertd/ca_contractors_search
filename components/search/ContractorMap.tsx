@@ -8,8 +8,9 @@ import {
   DEFAULT_TRADE,
   TRADE_COLORS,
   TRADE_HEX,
-  getTradeHex,
+  getTradeIconHex,
   getTradePaletteKey,
+  getTradeRingHex,
   getTradeStyle,
 } from "@/lib/trade-colors";
 import {
@@ -19,6 +20,11 @@ import {
   type LngLat,
 } from "@/lib/geo";
 import type { ContractorListing } from "@/lib/listings";
+import {
+  cardDataFromContractor,
+  contractorTrustIssueDot,
+} from "@/lib/cardData";
+import type { TradeSlug } from "@/lib/trades";
 
 interface Props {
   listings: ContractorListing[];
@@ -27,6 +33,8 @@ interface Props {
   onBoundsChange: (b: Bounds) => void;
   onMarkerHover: (id: string | null) => void;
   onMarkerSelect: (id: string) => void;
+  /** Same trade filter as the results list — drives display trade on markers. */
+  searchTrade?: TradeSlug | null;
   /** Clear list/map selection when the user clicks empty map (not a pin or cluster). */
   onClearSelection?: () => void;
   initialCenter?: LngLat;
@@ -40,16 +48,21 @@ const MAP_STYLE = "mapbox://styles/mapbox/streets-v12";
 const SOURCE_ID = "contractors";
 const LAYER_CLUSTER = "cm-clusters";
 const LAYER_CLUSTER_COUNT = "cm-cluster-count";
-const LAYER_UNCLUSTERED_HALO = "cm-unclustered-halo";
-const LAYER_UNCLUSTERED_CIRCLE = "cm-unclustered-circle";
+const LAYER_UNCLUSTERED_SHADOW = "cm-unclustered-shadow";
+const LAYER_UNCLUSTERED_MAIN = "cm-unclustered-main";
 const LAYER_UNCLUSTERED_ICON = "cm-unclustered-icon";
+const LAYER_UNCLUSTERED_ISSUE = "cm-unclustered-issue";
+
+/** Selected-card accent (see ContractorCardBase selected ring). */
+const BRAND_SELECTION_HEX = "#4F7CAC";
 
 const TRADE_PALETTE_ORDER = Object.keys(TRADE_COLORS) as (keyof typeof TRADE_COLORS)[];
 
+/** Raster size for Lucide → `addImage` (slightly smaller marker footprint). */
 const ICON_RASTER_PX = 20;
 
-function tradeOrdinal(trade: string | null | undefined): number {
-  const pk = getTradePaletteKey(trade);
+function tradeOrdinalFromDisplayLabel(displayTradeLabel: string): number {
+  const pk = getTradePaletteKey(displayTradeLabel);
   if (!pk) return -1;
   return TRADE_PALETTE_ORDER.indexOf(pk);
 }
@@ -77,11 +90,17 @@ function buildClusterColorExpr(): mapboxgl.ExpressionSpecification {
   ] as mapboxgl.ExpressionSpecification;
 }
 
-function listingsToGeoJSON(listings: ContractorListing[]): GeoJSON.FeatureCollection {
+function listingsToGeoJSON(
+  listings: ContractorListing[],
+  searchTrade: TradeSlug | null | undefined
+): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
   for (const l of listings) {
     if (l.latitude == null || l.longitude == null) continue;
-    const ord = tradeOrdinal(l.primary_trade);
+    const card = cardDataFromContractor(l, { searchTrade: searchTrade ?? undefined });
+    const displayLabel = card.primaryTradeLabel;
+    const ord = tradeOrdinalFromDisplayLabel(displayLabel);
+    const style = getTradeStyle(displayLabel);
     features.push({
       type: "Feature",
       id: l.license_number,
@@ -92,12 +111,13 @@ function listingsToGeoJSON(listings: ContractorListing[]): GeoJSON.FeatureCollec
       properties: {
         license_number: l.license_number,
         business_name: l.business_name,
-        primary_trade: l.primary_trade ?? "",
-        trade_label: getTradeStyle(l.primary_trade).label,
-        trade_hex: getTradeHex(l.primary_trade),
+        display_trade: displayLabel,
+        trade_label: style.label,
+        trade_hex: getTradeRingHex(displayLabel),
         trade_ord: ord,
         icon_id: iconIdForOrdinal(ord),
         city: l.city ?? "",
+        has_issue: contractorTrustIssueDot(card.trust) ? 1 : 0,
       },
     });
   }
@@ -126,14 +146,14 @@ async function svgToImageData(svgMarkup: string, size: number): Promise<ImageDat
   return ctx.getImageData(0, 0, size, size);
 }
 
-async function rasterizeLucideIcon(Icon: LucideIcon): Promise<ImageData> {
+async function rasterizeLucideIcon(Icon: LucideIcon, strokeHex: string): Promise<ImageData> {
   const markup = renderToStaticMarkup(
     createElement(Icon, {
       size: ICON_RASTER_PX,
-      color: "#ffffff",
-      stroke: "#ffffff",
+      color: strokeHex,
+      stroke: strokeHex,
       fill: "none",
-      strokeWidth: 2.25,
+      strokeWidth: 2.1,
       "aria-hidden": true,
     })
   );
@@ -144,81 +164,65 @@ async function ensureTradeIconImages(map: mapboxgl.Map): Promise<void> {
   for (let ord = 0; ord < TRADE_PALETTE_ORDER.length; ord++) {
     const id = iconIdForOrdinal(ord);
     if (map.hasImage(id)) continue;
-    const Icon = TRADE_COLORS[TRADE_PALETTE_ORDER[ord]].icon;
-    const data = await rasterizeLucideIcon(Icon);
+    const key = TRADE_PALETTE_ORDER[ord];
+    const Icon = TRADE_COLORS[key].icon;
+    const label = TRADE_COLORS[key].label;
+    const hex = getTradeIconHex(label);
+    const data = await rasterizeLucideIcon(Icon, hex);
     map.addImage(id, data, { pixelRatio: 1 });
   }
   if (!map.hasImage("trade-icon-default")) {
-    const data = await rasterizeLucideIcon(DEFAULT_TRADE.icon);
+    const hex = getTradeIconHex(null);
+    const data = await rasterizeLucideIcon(DEFAULT_TRADE.icon, hex);
     map.addImage("trade-icon-default", data, { pixelRatio: 1 });
   }
 }
 
+const hoverOrList: mapboxgl.ExpressionSpecification = [
+  "any",
+  ["boolean", ["feature-state", "hover"], false],
+  ["boolean", ["feature-state", "listHover"], false],
+] as mapboxgl.ExpressionSpecification;
+
+/** ~12% smaller than prior defaults for calmer density. */
 const radiusExpr: mapboxgl.ExpressionSpecification = [
   "case",
   ["boolean", ["feature-state", "selected"], false],
-  14,
-  [
-    "any",
-    ["boolean", ["feature-state", "hover"], false],
-    ["boolean", ["feature-state", "listHover"], false],
-  ],
-  12,
-  10,
+  9.25,
+  hoverOrList,
+  9,
+  7.75,
 ] as mapboxgl.ExpressionSpecification;
 
+/** Single outer ring: thin default, slightly stronger hover, brand when selected. */
 const strokeWidthExpr: mapboxgl.ExpressionSpecification = [
   "case",
   ["boolean", ["feature-state", "selected"], false],
-  3,
-  2,
+  2.5,
+  hoverOrList,
+  2.1,
+  1.75,
 ] as mapboxgl.ExpressionSpecification;
 
-const translateExpr: mapboxgl.ExpressionSpecification = [
-  "case",
-  [
-    "all",
-    ["boolean", ["feature-state", "selected"], false],
-    ["boolean", ["feature-state", "hover"], false],
-  ],
-  ["literal", [0, 0]],
-  [
-    "any",
-    ["boolean", ["feature-state", "hover"], false],
-    ["boolean", ["feature-state", "listHover"], false],
-  ],
-  ["literal", [0, -2]],
-  ["literal", [0, 0]],
-] as mapboxgl.ExpressionSpecification;
-
-const iconSizeExpr: mapboxgl.ExpressionSpecification = [
+const strokeColorExpr: mapboxgl.ExpressionSpecification = [
   "case",
   ["boolean", ["feature-state", "selected"], false],
-  14 / ICON_RASTER_PX,
-  [
-    "any",
-    ["boolean", ["feature-state", "hover"], false],
-    ["boolean", ["feature-state", "listHover"], false],
-  ],
-  12 / ICON_RASTER_PX,
-  10 / ICON_RASTER_PX,
+  BRAND_SELECTION_HEX,
+  ["get", "trade_hex"],
 ] as mapboxgl.ExpressionSpecification;
 
-const iconTranslateExpr: mapboxgl.ExpressionSpecification = [
+const shadowRadiusExpr: mapboxgl.ExpressionSpecification = [
+  "+",
+  radiusExpr,
+  1.15,
+] as mapboxgl.ExpressionSpecification;
+
+/** Stronger shadow on hover (circle-translate must stay literal on circles). */
+const shadowColorExpr: mapboxgl.ExpressionSpecification = [
   "case",
-  [
-    "all",
-    ["boolean", ["feature-state", "selected"], false],
-    ["boolean", ["feature-state", "hover"], false],
-  ],
-  ["literal", [0, 0]],
-  [
-    "any",
-    ["boolean", ["feature-state", "hover"], false],
-    ["boolean", ["feature-state", "listHover"], false],
-  ],
-  ["literal", [0, -2]],
-  ["literal", [0, 0]],
+  hoverOrList,
+  "rgba(15, 23, 42, 0.18)",
+  "rgba(15, 23, 42, 0.09)",
 ] as mapboxgl.ExpressionSpecification;
 
 export default function ContractorMap({
@@ -228,6 +232,7 @@ export default function ContractorMap({
   onBoundsChange,
   onMarkerHover,
   onMarkerSelect,
+  searchTrade = null,
   onClearSelection,
   initialCenter = DEFAULT_CENTER,
   initialZoom = DEFAULT_ZOOM,
@@ -249,6 +254,8 @@ export default function ContractorMap({
 
   const listingsRef = useRef(listings);
   listingsRef.current = listings;
+  const searchTradeRef = useRef(searchTrade);
+  searchTradeRef.current = searchTrade;
 
   const hoverPinIdRef = useRef<string | null>(null);
   const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -332,7 +339,6 @@ export default function ContractorMap({
     };
 
     const setHoverPin = (nextId: string | null, feature?: mapboxgl.MapboxGeoJSONFeature) => {
-      // Same pin: no-op. (Allow repeated null to still run cleanup when needed.)
       if (nextId !== null && hoverPinIdRef.current === nextId) return;
       if (hoverPinIdRef.current) {
         map.removeFeatureState({ source: SOURCE_ID, id: hoverPinIdRef.current }, "hover");
@@ -350,7 +356,7 @@ export default function ContractorMap({
 
     const onMouseMove = (e: mapboxgl.MapMouseEvent) => {
       const feats = map.queryRenderedFeatures(e.point, {
-        layers: [LAYER_UNCLUSTERED_CIRCLE],
+        layers: [LAYER_UNCLUSTERED_MAIN],
       });
       const top = feats[0];
       const nextId =
@@ -380,13 +386,17 @@ export default function ContractorMap({
         if (clId != null && typeof src.getClusterExpansionZoom === "function") {
           src.getClusterExpansionZoom(Number(clId), (err, zoom) => {
             if (err || zoom == null) return;
-            map.easeTo({ center: coords, zoom });
+            const cur = map.getZoom();
+            // Always move at least half a zoom in — avoids a no-op when
+            // expansion zoom equals current zoom (cluster never “opens”).
+            const target = Math.min(18, Math.max(zoom, cur + 0.5));
+            map.easeTo({ center: coords, zoom: target });
           });
         }
         return;
       }
 
-      const pinHits = map.queryRenderedFeatures(e.point, { layers: [LAYER_UNCLUSTERED_CIRCLE] });
+      const pinHits = map.queryRenderedFeatures(e.point, { layers: [LAYER_UNCLUSTERED_MAIN] });
       if (pinHits.length > 0) {
         const id = String(pinHits[0].id ?? pinHits[0].properties?.license_number);
         onMarkerSelectRef.current(id);
@@ -395,6 +405,11 @@ export default function ContractorMap({
 
       onClearSelectionRef.current?.();
     };
+
+    const unclusteredFilter: mapboxgl.ExpressionSpecification = [
+      "!",
+      ["has", "point_count"],
+    ] as mapboxgl.ExpressionSpecification;
 
     map.on("load", () => {
       void (async () => {
@@ -408,9 +423,16 @@ export default function ContractorMap({
 
         map.addSource(SOURCE_ID, {
           type: "geojson",
-          data: listingsToGeoJSON(listingsRef.current),
+          data: listingsToGeoJSON(listingsRef.current, searchTradeRef.current),
           cluster: true,
           clusterRadius: 50,
+          /**
+           * Stop clustering above this zoom so individual trade markers
+           * appear at the default peninsula zoom (~11.6). Mapbox default
+           * is 14 — with mock city+jitter coords that left users stuck on
+           * gray count bubbles until zoomed far past street level.
+           */
+          clusterMaxZoom: 11,
           clusterProperties: {
             min_ord: ["min", ["get", "trade_ord"]],
             max_ord: ["max", ["get", "trade_ord"]],
@@ -455,31 +477,30 @@ export default function ContractorMap({
         });
 
         map.addLayer({
-          id: LAYER_UNCLUSTERED_HALO,
+          id: LAYER_UNCLUSTERED_SHADOW,
           type: "circle",
           source: SOURCE_ID,
-          filter: ["!", ["has", "point_count"]],
+          filter: unclusteredFilter,
           paint: {
-            "circle-radius": 16,
-            "circle-color": "rgba(0,0,0,0)",
-            "circle-stroke-width": 1,
-            "circle-stroke-color": ["get", "trade_hex"],
-            "circle-translate": translateExpr,
-            "circle-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 1, 0],
+            "circle-radius": shadowRadiusExpr,
+            "circle-color": shadowColorExpr,
+            // Mapbox does not allow data/feature-state expressions on circle-translate.
+            "circle-translate": [0, 1.5],
+            "circle-opacity": 0.85,
           },
         });
 
         map.addLayer({
-          id: LAYER_UNCLUSTERED_CIRCLE,
+          id: LAYER_UNCLUSTERED_MAIN,
           type: "circle",
           source: SOURCE_ID,
-          filter: ["!", ["has", "point_count"]],
+          filter: unclusteredFilter,
           paint: {
             "circle-radius": radiusExpr,
-            "circle-color": ["get", "trade_hex"],
+            "circle-color": "#ffffff",
             "circle-stroke-width": strokeWidthExpr,
-            "circle-stroke-color": "#ffffff",
-            "circle-translate": translateExpr,
+            "circle-stroke-color": strokeColorExpr,
+            "circle-translate": [0, 0],
             "circle-opacity": 1,
           },
         });
@@ -488,15 +509,29 @@ export default function ContractorMap({
           id: LAYER_UNCLUSTERED_ICON,
           type: "symbol",
           source: SOURCE_ID,
-          filter: ["!", ["has", "point_count"]],
+          filter: unclusteredFilter,
           layout: {
             "icon-image": ["get", "icon_id"],
-            "icon-size": iconSizeExpr,
+            // `icon-size` is layout-only: no feature-state. `icon-translate` paint cannot be
+            // data-driven either — default (0,0). Size ≈ prior ~8.5px on 20px raster.
+            "icon-size": 0.46,
             "icon-allow-overlap": true,
             "icon-ignore-placement": true,
           },
+        });
+
+        map.addLayer({
+          id: LAYER_UNCLUSTERED_ISSUE,
+          type: "circle",
+          source: SOURCE_ID,
+          filter: ["all", unclusteredFilter, ["==", ["get", "has_issue"], 1]],
           paint: {
-            "icon-translate": iconTranslateExpr,
+            "circle-radius": 2.5,
+            "circle-color": "#f59e0b",
+            "circle-stroke-width": 1.15,
+            "circle-stroke-color": "#ffffff",
+            "circle-translate": [5.5, 4],
+            "circle-opacity": 0.92,
           },
         });
 
@@ -528,8 +563,8 @@ export default function ContractorMap({
     if (!map?.isStyleLoaded()) return;
     const src = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
     if (!src) return;
-    src.setData(listingsToGeoJSON(listings));
-  }, [listings]);
+    src.setData(listingsToGeoJSON(listings, searchTrade));
+  }, [listings, searchTrade]);
 
   useEffect(() => {
     const map = mapRef.current;

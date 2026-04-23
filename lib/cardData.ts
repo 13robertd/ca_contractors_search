@@ -32,6 +32,20 @@ export interface TrustFlags {
   pendingSuspension?: boolean;
 }
 
+/**
+ * Whether to show the map’s secondary trust-issue dot (inactive, missing
+ * WC/bond, discipline, or pending suspension) — aligned with warning
+ * treatment on {@link TrustBadgeRow}.
+ */
+export function contractorTrustIssueDot(trust: TrustFlags): boolean {
+  if (trust.active === false) return true;
+  if (trust.discipline) return true;
+  if (trust.pendingSuspension) return true;
+  if (trust.workersComp === false) return true;
+  if (trust.bonded === false) return true;
+  return false;
+}
+
 export interface ContractorCardData {
   licenseNumber: string;
   businessName: string;
@@ -84,7 +98,7 @@ function resolveTradeSlugs(c: {
   return slugs;
 }
 
-interface AdaptOpts {
+export interface CardDataAdaptOpts {
   /**
    * If the user is viewing a trade-filtered search page, the active
    * trade slug. When the contractor holds that trade we promote it to
@@ -132,7 +146,7 @@ function adaptCommon(
     | "classification_count"
     | "primary_trade"
   >,
-  opts: AdaptOpts = {}
+  opts: CardDataAdaptOpts = {}
 ): ContractorCardData {
   const slugs = resolveTradeSlugs(c);
   const primary = pickPrimaryTrade(slugs, opts.searchTrade);
@@ -169,14 +183,26 @@ function adaptCommon(
 
 export function cardDataFromContractor(
   c: Contractor | ContractorListing,
-  opts: AdaptOpts = {}
+  opts: CardDataAdaptOpts = {}
 ): ContractorCardData {
   return adaptCommon(c, opts);
 }
 
+/**
+ * Same `primaryTradeLabel` string the card passes to `getTradeStyle()` —
+ * use for map markers, legends, and any surface that must stay visually
+ * aligned with {@link ContractorCardBase}.
+ */
+export function displayTradeLabelForContractor(
+  c: Contractor | ContractorListing,
+  opts: CardDataAdaptOpts = {}
+): string {
+  return cardDataFromContractor(c, opts).primaryTradeLabel;
+}
+
 export function cardDataFromMock(
   m: MockContractor,
-  opts: AdaptOpts = {}
+  opts: CardDataAdaptOpts = {}
 ): ContractorCardData {
   // Mocks already have a Contractor adapter — reuse it so behavior stays
   // in sync with what the detail page would render for the same entry.

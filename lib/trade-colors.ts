@@ -2,9 +2,16 @@
  * Single source of truth for the VISUAL trade palette.
  *
  * Every surface that wants to speak "this is a plumber" — card border,
- * trade icon, classification dot, filter chip, detail-page header —
- * pulls from here. Keep it narrow and additive: a new trade means one
- * new row in TRADE_COLORS. Nothing else.
+ * trade icon, classification dot, filter chip, map marker ring/icon,
+ * detail-page header — pulls from here. Keep it narrow and additive: a
+ * new trade means one new row in TRADE_COLORS. Nothing else.
+ *
+ * Map / canvas code: use {@link getTradeRingHex} (stroke/fill 500-class
+ * color), {@link getTradeIconHex} (icon stroke matching Tailwind `*.text`
+ * /700 shades), and {@link getTradeLucideIcon} instead of duplicating
+ * Lucide picks. Card rows should keep using `getTradeStyle()` with the
+ * same display-trade string as `ContractorCardData.primaryTradeLabel`
+ * from `lib/cardData.ts`.
  *
  * ┌─────────────────────────────────────────────────────────────┐
  * │ Schema note                                                 │
@@ -256,4 +263,53 @@ export function getTradePaletteKey(
     return needle.includes(kk) || kk.includes(needle);
   }) as keyof typeof TRADE_COLORS | undefined;
   return hit ?? null;
+}
+
+/**
+ * Hex for the trade-colored ring on map markers / dots — same values as
+ * {@link TRADE_HEX} (Tailwind 500-class fills used on cards and chips).
+ */
+export function getTradeRingHex(trade: string | null | undefined): string {
+  return getTradeHex(trade);
+}
+
+/**
+ * Hex stroke for trade Lucide icons on white (matches Tailwind `*.text`
+ * on cards, e.g. `text-blue-700` → blue-700).
+ */
+export const TRADE_ICON_HEX: Record<string, string> = {
+  Plumbing: "#1d4ed8",
+  Electrical: "#a16207",
+  Roofing: "#b91c1c",
+  "Warm-Air Heating, Ventilating and Air-Conditioning": "#c2410c",
+  "Painting and Decorating": "#7e22ce",
+  Landscaping: "#15803d",
+  "Flooring and Floor Covering": "#b45309",
+  Concrete: "#3f3f46",
+  Drywall: "#404040",
+  "General Building": "#334155",
+  "General Engineering": "#44403c",
+};
+
+export const DEFAULT_TRADE_ICON_HEX = "#374151";
+
+export function getTradeIconHex(trade: string | null | undefined): string {
+  if (!trade) return DEFAULT_TRADE_ICON_HEX;
+  if (TRADE_ICON_HEX[trade]) return TRADE_ICON_HEX[trade];
+  const resolved = getTradeStyle(trade);
+  const key = Object.keys(TRADE_COLORS).find(
+    (k) => TRADE_COLORS[k].label === resolved.label
+  );
+  if (key && TRADE_ICON_HEX[key]) return TRADE_ICON_HEX[key];
+  const needle = trade.toLowerCase().trim();
+  const hit = Object.keys(TRADE_ICON_HEX).find((k) => {
+    const kk = k.toLowerCase();
+    return needle.includes(kk) || kk.includes(needle);
+  });
+  return hit ? TRADE_ICON_HEX[hit] : DEFAULT_TRADE_ICON_HEX;
+}
+
+/** Lucide icon component for a trade label — same as `getTradeStyle(trade).icon`. */
+export function getTradeLucideIcon(trade: string | null | undefined): LucideIcon {
+  return getTradeStyle(trade).icon;
 }

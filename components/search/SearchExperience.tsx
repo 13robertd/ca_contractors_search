@@ -162,6 +162,7 @@ export default function SearchExperience({ listings, initial }: Props) {
                 onBoundsChange={handleBoundsChange}
                 onMarkerHover={handleHover}
                 onMarkerSelect={handleMarkerSelect}
+                searchTrade={asTradeSlug(initial.trade)}
                 onClearSelection={() => setSelectedId(null)}
                 emitBoundsOnMove={searchOnMove}
               />

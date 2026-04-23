@@ -22,7 +22,8 @@ export const DEFAULT_CENTER: LngLat = {
   longitude: -122.31,
   latitude: 37.51,
 };
-export const DEFAULT_ZOOM = 9.6;
+/** Search map default — above GeoJSON `clusterMaxZoom` (11) so trade pins render on first paint. */
+export const DEFAULT_ZOOM = 11.6;
 
 // Bay Area city centroids (longitude, latitude). Add more cities as data grows.
 const CITY_CENTROIDS: Record<string, LngLat> = {
