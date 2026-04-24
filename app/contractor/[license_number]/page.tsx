@@ -13,6 +13,12 @@ import TrustBadgeRow from "@/components/TrustBadgeRow";
 import ClassificationTags from "@/components/ClassificationTags";
 import SaveContractorButton from "@/components/SaveContractorButton";
 import { getTradeStyle } from "@/lib/trade-colors";
+import {
+  getBondDetailSummary,
+  getEntityTypeLabel,
+  getWorkersCompDetailSummary,
+  isOwnerOperated,
+} from "@/lib/trustSignals";
 
 /**
  * Contractor detail page. Server component — fetches the contractor row
@@ -36,27 +42,6 @@ function cslbPublicRecordUrl(license: string): string {
   return `https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/LicenseDetail.aspx?LicNum=${encodeURIComponent(
     license
   )}`;
-}
-
-/**
- * Map the CSLB `business_type` code (or a pre-expanded label) to a
- * friendly entity-type label. Unknown codes fall through unchanged.
- */
-function ownershipLabel(code: string | null): string {
-  if (!code) return "Unknown";
-  const map: Record<string, string> = {
-    SO: "Sole Ownership",
-    PT: "Partnership",
-    CR: "Corporation",
-    LLC: "Limited Liability Company",
-    JV: "Joint Venture",
-    "Sole Ownership": "Sole Ownership",
-    Partnership: "Partnership",
-    Corporation: "Corporation",
-    "Limited Liability Company": "Limited Liability Company",
-    "Joint Venture": "Joint Venture",
-  };
-  return map[code] ?? code;
 }
 
 /**
@@ -231,11 +216,57 @@ export default async function ContractorDetailPage({ params }: PageProps) {
         <Section title="Ownership">
           <dl className="grid gap-4 sm:grid-cols-2">
             <DataRow label="Entity type">
-              {ownershipLabel(c.business_type)}
+              {getEntityTypeLabel(c)}
             </DataRow>
-            <DataRow label="Owner / officers">
-              <span className="font-normal text-ink-secondary italic">
-                Owner information coming soon
+            <DataRow label="CSLB business type code">
+              {c.business_type?.trim() ? (
+                <span className="font-mono text-[13px] tabular-nums">
+                  {c.business_type}
+                </span>
+              ) : (
+                <NotProvided />
+              )}
+            </DataRow>
+            {isOwnerOperated(c) ? (
+              <DataRow label="Structure">
+                Owner-operated sole proprietorship (typical one-person shop
+                or owner with no separate corporate entity).
+              </DataRow>
+            ) : null}
+            <DataRow label="Owner / qualifier">
+              {c.owner_name?.trim() ? (
+                c.owner_name
+              ) : (
+                <span className="font-normal text-ink-secondary italic">
+                  Not listed on this license extract — see CSLB personnel
+                  record when available.
+                </span>
+              )}
+            </DataRow>
+          </dl>
+        </Section>
+
+        {/* ============== License & compliance (CSLB) ============== */}
+        <Section title="License & compliance">
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <DataRow label="Primary status">
+              {c.primary_status?.trim() || "—"}
+            </DataRow>
+            <DataRow label="Suspension reason">
+              {c.suspension_reason?.trim() ? (
+                c.suspension_reason
+              ) : (
+                <span className="text-ink-tertiary">None on file</span>
+              )}
+            </DataRow>
+            <DataRow label="Workers' compensation">
+              <span className="text-[14px] text-ink-secondary leading-relaxed">
+                {getWorkersCompDetailSummary(c)}
+              </span>
+            </DataRow>
+            <DataRow label="License bond">
+              <span className="text-[14px] text-ink-secondary leading-relaxed">
+                {getBondDetailSummary(c)}
               </span>
             </DataRow>
           </dl>

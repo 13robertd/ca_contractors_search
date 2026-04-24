@@ -7,6 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "geocode": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/geocode-contractors.ts",
+    "geocode:dry": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/geocode-contractors.ts --dry-run",
+    "geocode:stats": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/geocode-contractors.ts --stats",
+    "geocode:pass2": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/geocode-pass2.ts",
+    "geocode:pass2:dry": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/geocode-pass2.ts --dry-run",
+    "audit:geocode": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/audit-geocode-failures.ts",
     "check-env": "node scripts/check-env.mjs",
     "deploy:preview": "npm run check-env && vercel",
     "deploy:prod": "npm run check-env && vercel --prod",
@@ -22,6 +28,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "@types/node": "^22.9.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

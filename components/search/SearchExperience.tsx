@@ -50,13 +50,37 @@ export default function SearchExperience({ listings, initial }: Props) {
 
   const visibleListings = useMemo(() => {
     return listings.filter((l) => {
-      if (l.latitude == null || l.longitude == null) return false;
       if (!bounds) return true;
+      /* Rows without a map pin still stay in the list when the map is panned. */
+      if (l.latitude == null || l.longitude == null) return true;
       return isInBounds(
         { latitude: l.latitude, longitude: l.longitude },
         bounds
       );
     });
+  }, [listings, bounds]);
+
+  const mapGeoSummary = useMemo(() => {
+    let precise = 0;
+    let approximate = 0;
+    let mailingHidden = 0;
+    for (const l of listings) {
+      const st = (l.geocode_status ?? "").toLowerCase();
+      if (st === "mailing_only" || st === "failed_pass2") mailingHidden++;
+      if (l.mapPinKind === "precise") precise++;
+      else if (l.mapPinKind === "approximate") approximate++;
+    }
+    return { precise, approximate, mailingHidden };
+  }, [listings]);
+
+  const hasPinsInBounds = useMemo(() => {
+    if (!bounds) return true;
+    return listings.some(
+      (l) =>
+        l.latitude != null &&
+        l.longitude != null &&
+        isInBounds({ latitude: l.latitude, longitude: l.longitude }, bounds)
+    );
   }, [listings, bounds]);
 
   const handleBoundsChange = useCallback((b: Bounds) => {
@@ -72,7 +96,7 @@ export default function SearchExperience({ listings, initial }: Props) {
   }, []);
 
   const isFiltered = bounds !== null && visibleListings.length < listings.length;
-  const noGeoData = listings.every((l) => l.latitude == null);
+  const noMapPins = listings.every((l) => l.mapPinKind == null);
 
   return (
     <div className="bg-surface-subtle min-h-[calc(100vh-4rem)]">
@@ -137,10 +161,11 @@ export default function SearchExperience({ listings, initial }: Props) {
             searchTrade={asTradeSlug(initial.trade)}
           />
 
-          {noGeoData ? (
+          {noMapPins ? (
             <p className="mt-6 text-[13px] text-ink-tertiary">
-              Note: contractor coordinates are derived from city; precise
-              addresses will land once geocoding is wired to the database.
+              Note: no mappable coordinates yet for this result set. Pins appear
+              after rooftop-, street-, or interpolated-level geocoding; city-level
+              shows as approximate on the map.
             </p>
           ) : null}
         </section>
@@ -166,15 +191,18 @@ export default function SearchExperience({ listings, initial }: Props) {
                 onClearSelection={() => setSelectedId(null)}
                 emitBoundsOnMove={searchOnMove}
               />
-              {visibleListings.length === 0 && bounds ? (
+              {!hasPinsInBounds && bounds != null && listings.length > 0 ? (
                 <div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex justify-center">
-                  <div className="pointer-events-auto inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-line-subtle shadow-card text-[13px] text-ink-secondary">
-                    Map results will appear as location data becomes available.
+                  <div className="pointer-events-auto inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-line-subtle shadow-card text-[13px] text-ink-secondary text-center max-w-sm">
+                    No map pins in this view (panned away from contractors or only
+                    mailing-only / non-geocoded listings). The list still shows all
+                    matches.
                   </div>
                 </div>
               ) : null}
               <MapSummaryCard
-                count={visibleListings.length}
+                inBoundsCount={visibleListings.length}
+                mapGeoSummary={mapGeoSummary}
                 searchOnMove={searchOnMove}
                 onToggleSearchOnMove={() => setSearchOnMove((v) => !v)}
               />

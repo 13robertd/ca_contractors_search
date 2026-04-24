@@ -40,6 +40,8 @@ export interface MockContractor {
   status: LicenseStatus;
   bonded: boolean;
   workersComp: boolean;
+  /** Optional CSLB `BusinessType` code for trust demos (e.g. SO). */
+  businessTypeCode?: string;
   /** Any additional compliance chips ("CFL" etc.). */
   extraTags?: string[];
 }
@@ -54,6 +56,7 @@ interface RawContractor {
   status?: LicenseStatus;
   bonded?: boolean;
   workersComp?: boolean;
+  businessTypeCode?: string;
   extraTags?: string[];
 }
 
@@ -78,7 +81,8 @@ const RAW: RawContractor[] = [
   { licenseNumber: "1158811", companyName: "Shoreview Plumbing",
     neighborhood: "Shoreview", classifications: ["C-36"],
     yearsInBusiness: 8,  issueDate: "2017-06-22",
-    bonded: true, workersComp: false },
+    bonded: true, workersComp: false,
+    businessTypeCode: "SO" },
   { licenseNumber: "1280456", companyName: "Coastside Plumbing & Rooter",
     classifications: ["C-36"],
     yearsInBusiness: 3,  issueDate: "2022-11-03",
@@ -252,6 +256,7 @@ export const MOCK_CONTRACTORS: MockContractor[] = RAW.map((r) => ({
   status: r.status ?? "active",
   bonded: r.bonded ?? false,
   workersComp: r.workersComp ?? false,
+  businessTypeCode: r.businessTypeCode,
   extraTags: r.extraTags,
 }));
 
@@ -282,6 +287,8 @@ export function mockContractorToContractor(m: MockContractor): Contractor {
   const issueYear = Number.parseInt(m.issueDate.slice(0, 4), 10);
   const primaryTradeLabel = TRADE_TAXONOMY[m.primaryTrade].label;
   const isActive = m.status === "active";
+  const businessType =
+    m.businessTypeCode ?? (isActive ? "CR" : null);
 
   return {
     license_number: m.licenseNumber,
@@ -293,7 +300,9 @@ export function mockContractorToContractor(m: MockContractor): Contractor {
     zip_code: null,
     county: "San Mateo",
     phone: mockPhoneFromLicense(m.licenseNumber),
-    business_type: null,
+    business_type: businessType,
+    entity_type: m.businessTypeCode === "SO" ? "Sole Ownership" : null,
+    owner_name: null,
     classification_codes: m.classifications,
     classification_labels: classificationLabels,
     primary_trade: primaryTradeLabel,
@@ -301,7 +310,7 @@ export function mockContractorToContractor(m: MockContractor): Contractor {
     has_multiple_classifications: m.classifications.length > 1,
     primary_status:
       m.status === "active"
-        ? "Active"
+        ? "Clear"
         : m.status === "expired"
         ? "Expired"
         : "Suspended",
@@ -315,6 +324,12 @@ export function mockContractorToContractor(m: MockContractor): Contractor {
       : null,
     last_update: null,
     has_workers_comp: m.workersComp,
+    workers_comp_coverage_type:
+      m.workersComp
+        ? "Workers' Compensation Insurance"
+        : m.businessTypeCode === "SO"
+        ? "Exempt"
+        : null,
     has_contractor_bond: m.bonded,
     has_pending_suspension: m.status === "suspended",
     has_disciplinary_history: false,

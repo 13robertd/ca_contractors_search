@@ -20,10 +20,8 @@ import {
   type LngLat,
 } from "@/lib/geo";
 import type { ContractorListing } from "@/lib/listings";
-import {
-  cardDataFromContractor,
-  contractorTrustIssueDot,
-} from "@/lib/cardData";
+import { cardDataFromContractor } from "@/lib/cardData";
+import { contractorMapTrustIssue } from "@/lib/trustSignals";
 import type { TradeSlug } from "@/lib/trades";
 
 interface Props {
@@ -45,13 +43,23 @@ interface Props {
 
 const MAP_STYLE = "mapbox://styles/mapbox/streets-v12";
 
-const SOURCE_ID = "contractors";
+/** Clustered strong-precision pins (rooftop / street / interpolated). */
+const SOURCE_PRECISE = "cm-contractors-precise";
 const LAYER_CLUSTER = "cm-clusters";
 const LAYER_CLUSTER_COUNT = "cm-cluster-count";
 const LAYER_UNCLUSTERED_SHADOW = "cm-unclustered-shadow";
 const LAYER_UNCLUSTERED_MAIN = "cm-unclustered-main";
 const LAYER_UNCLUSTERED_ICON = "cm-unclustered-icon";
 const LAYER_UNCLUSTERED_ISSUE = "cm-unclustered-issue";
+
+/** City/zip approximate pins — not clustered so they do not inflate precise clusters. */
+const SOURCE_APPROX = "cm-contractors-approx";
+const LAYER_APPROX_SHADOW = "cm-approx-shadow";
+const LAYER_APPROX_MAIN = "cm-approx-main";
+const LAYER_APPROX_ICON = "cm-approx-icon";
+const LAYER_APPROX_ISSUE = "cm-approx-issue";
+
+const PIN_HOVER_LAYERS = [LAYER_UNCLUSTERED_MAIN, LAYER_APPROX_MAIN] as const;
 
 /** Selected-card accent (see ContractorCardBase selected ring). */
 const BRAND_SELECTION_HEX = "#4F7CAC";
@@ -90,38 +98,66 @@ function buildClusterColorExpr(): mapboxgl.ExpressionSpecification {
   ] as mapboxgl.ExpressionSpecification;
 }
 
-function listingsToGeoJSON(
+function contractorPointFeature(
+  l: ContractorListing,
+  searchTrade: TradeSlug | null | undefined
+): GeoJSON.Feature<GeoJSON.Point> | null {
+  if (l.latitude == null || l.longitude == null) return null;
+  const card = cardDataFromContractor(l, { searchTrade: searchTrade ?? undefined });
+  const displayLabel = card.primaryTradeLabel;
+  const ord = tradeOrdinalFromDisplayLabel(displayLabel);
+  const style = getTradeStyle(displayLabel);
+  return {
+    type: "Feature",
+    id: l.license_number,
+    geometry: {
+      type: "Point",
+      coordinates: [l.longitude, l.latitude],
+    },
+    properties: {
+      license_number: l.license_number,
+      business_name: l.business_name,
+      display_trade: displayLabel,
+      trade_label: style.label,
+      trade_hex: getTradeRingHex(displayLabel),
+      trade_ord: ord,
+      icon_id: iconIdForOrdinal(ord),
+      city: l.city ?? "",
+      has_issue: contractorMapTrustIssue(l) ? 1 : 0,
+      is_approximate: l.mapPinKind === "approximate" ? 1 : 0,
+    },
+  };
+}
+
+function listingsToPreciseGeoJSON(
   listings: ContractorListing[],
   searchTrade: TradeSlug | null | undefined
 ): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
   for (const l of listings) {
-    if (l.latitude == null || l.longitude == null) continue;
-    const card = cardDataFromContractor(l, { searchTrade: searchTrade ?? undefined });
-    const displayLabel = card.primaryTradeLabel;
-    const ord = tradeOrdinalFromDisplayLabel(displayLabel);
-    const style = getTradeStyle(displayLabel);
-    features.push({
-      type: "Feature",
-      id: l.license_number,
-      geometry: {
-        type: "Point",
-        coordinates: [l.longitude, l.latitude],
-      },
-      properties: {
-        license_number: l.license_number,
-        business_name: l.business_name,
-        display_trade: displayLabel,
-        trade_label: style.label,
-        trade_hex: getTradeRingHex(displayLabel),
-        trade_ord: ord,
-        icon_id: iconIdForOrdinal(ord),
-        city: l.city ?? "",
-        has_issue: contractorTrustIssueDot(card.trust) ? 1 : 0,
-      },
-    });
+    if (l.mapPinKind !== "precise") continue;
+    const f = contractorPointFeature(l, searchTrade);
+    if (f) features.push(f);
   }
   return { type: "FeatureCollection", features };
+}
+
+function listingsToApproxGeoJSON(
+  listings: ContractorListing[],
+  searchTrade: TradeSlug | null | undefined
+): GeoJSON.FeatureCollection {
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+  for (const l of listings) {
+    if (l.mapPinKind !== "approximate") continue;
+    const f = contractorPointFeature(l, searchTrade);
+    if (f) features.push(f);
+  }
+  return { type: "FeatureCollection", features };
+}
+
+function pinSourceForRow(row: ContractorListing | undefined): typeof SOURCE_PRECISE | typeof SOURCE_APPROX | null {
+  if (!row?.mapPinKind) return null;
+  return row.mapPinKind === "approximate" ? SOURCE_APPROX : SOURCE_PRECISE;
 }
 
 async function svgToImageData(svgMarkup: string, size: number): Promise<ImageData> {
@@ -225,6 +261,47 @@ const shadowColorExpr: mapboxgl.ExpressionSpecification = [
   "rgba(15, 23, 42, 0.09)",
 ] as mapboxgl.ExpressionSpecification;
 
+/** Smaller, softer pins for city/zip “approximate” geocodes (separate unclustered source). */
+const approxRadiusExpr: mapboxgl.ExpressionSpecification = [
+  "case",
+  ["boolean", ["feature-state", "selected"], false],
+  7.75,
+  hoverOrList,
+  7.25,
+  6.75,
+] as mapboxgl.ExpressionSpecification;
+
+const approxShadowRadiusExpr: mapboxgl.ExpressionSpecification = [
+  "+",
+  approxRadiusExpr,
+  1,
+] as mapboxgl.ExpressionSpecification;
+
+const approxStrokeWidthExpr: mapboxgl.ExpressionSpecification = [
+  "case",
+  ["boolean", ["feature-state", "selected"], false],
+  2.2,
+  hoverOrList,
+  1.85,
+  1.55,
+] as mapboxgl.ExpressionSpecification;
+
+const approxMainOpacityExpr: mapboxgl.ExpressionSpecification = [
+  "case",
+  ["boolean", ["feature-state", "selected"], false],
+  0.9,
+  hoverOrList,
+  0.78,
+  0.58,
+] as mapboxgl.ExpressionSpecification;
+
+const approxShadowOpacityExpr: mapboxgl.ExpressionSpecification = [
+  "case",
+  hoverOrList,
+  "rgba(15, 23, 42, 0.12)",
+  "rgba(15, 23, 42, 0.06)",
+] as mapboxgl.ExpressionSpecification;
+
 export default function ContractorMap({
   listings,
   highlightedId,
@@ -258,10 +335,13 @@ export default function ContractorMap({
   searchTradeRef.current = searchTrade;
 
   const hoverPinIdRef = useRef<string | null>(null);
+  const hoverPinSourceRef = useRef<string | null>(null);
   const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const prevSelectedForStateRef = useRef<string | null>(null);
+  const prevSelectedSourceRef = useRef<string | null>(null);
   const prevHighlightForStateRef = useRef<string | null>(null);
+  const prevHighlightSourceRef = useRef<string | null>(null);
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
@@ -318,34 +398,57 @@ export default function ContractorMap({
 
     const schedulePopup = (feature: mapboxgl.MapboxGeoJSONFeature) => {
       clearPopupTimer();
-      const props = feature.properties as Record<string, string> | null;
+      const props = feature.properties as Record<string, string | number> | null;
       if (!props) return;
       const geom = feature.geometry;
       if (geom.type !== "Point") return;
       const [lng, lat] = geom.coordinates;
 
+      const isApprox =
+        props.is_approximate === 1 ||
+        props.is_approximate === "1" ||
+        Number(props.is_approximate) === 1;
+
       popupTimerRef.current = setTimeout(() => {
         const tradeLine = [props.trade_label, props.city].filter(Boolean).join(" · ");
+        const approxLine = isApprox
+          ? `<div class="contractor-pin-popup-approx">Approximate location</div>`
+          : "";
         popup
           .setLngLat([lng, lat])
           .setHTML(
             `<div class="contractor-pin-popup-inner">` +
-              `<div class="contractor-pin-popup-name">${escapeHtml(props.business_name)}</div>` +
-              `<div class="contractor-pin-popup-meta">${escapeHtml(tradeLine)}</div>` +
+              `<div class="contractor-pin-popup-name">${escapeHtml(String(props.business_name ?? ""))}</div>` +
+              approxLine +
+              `<div class="contractor-pin-popup-meta">${escapeHtml(String(tradeLine))}</div>` +
               `</div>`
           )
           .addTo(map);
       }, 100);
     };
 
-    const setHoverPin = (nextId: string | null, feature?: mapboxgl.MapboxGeoJSONFeature) => {
-      if (nextId !== null && hoverPinIdRef.current === nextId) return;
-      if (hoverPinIdRef.current) {
-        map.removeFeatureState({ source: SOURCE_ID, id: hoverPinIdRef.current }, "hover");
+    const setHoverPin = (
+      nextId: string | null,
+      nextSource: string | null,
+      feature?: mapboxgl.MapboxGeoJSONFeature
+    ) => {
+      if (
+        nextId !== null &&
+        hoverPinIdRef.current === nextId &&
+        hoverPinSourceRef.current === nextSource
+      ) {
+        return;
+      }
+      if (hoverPinIdRef.current && hoverPinSourceRef.current) {
+        map.removeFeatureState(
+          { source: hoverPinSourceRef.current, id: hoverPinIdRef.current },
+          "hover"
+        );
       }
       hoverPinIdRef.current = nextId;
-      if (nextId) {
-        map.setFeatureState({ source: SOURCE_ID, id: nextId }, { hover: true });
+      hoverPinSourceRef.current = nextSource;
+      if (nextId && nextSource) {
+        map.setFeatureState({ source: nextSource, id: nextId }, { hover: true });
         onMarkerHoverRef.current(nextId);
         if (feature) schedulePopup(feature);
       } else {
@@ -356,24 +459,25 @@ export default function ContractorMap({
 
     const onMouseMove = (e: mapboxgl.MapMouseEvent) => {
       const feats = map.queryRenderedFeatures(e.point, {
-        layers: [LAYER_UNCLUSTERED_MAIN],
+        layers: [...PIN_HOVER_LAYERS],
       });
       const top = feats[0];
       const nextId =
         top && top.id != null ? String(top.id) : (top?.properties?.license_number as string | undefined) ?? null;
+      const nextSource = (top?.source as string | undefined) ?? null;
 
-      if (nextId) {
+      if (nextId && nextSource) {
         map.getCanvas().style.cursor = "pointer";
-        setHoverPin(nextId, top);
+        setHoverPin(nextId, nextSource, top);
       } else {
         map.getCanvas().style.cursor = "";
-        setHoverPin(null);
+        setHoverPin(null, null);
       }
     };
 
     const onMouseLeaveCanvas = () => {
       map.getCanvas().style.cursor = "";
-      setHoverPin(null);
+      setHoverPin(null, null);
     };
 
     const onMapClick = (e: mapboxgl.MapMouseEvent) => {
@@ -381,7 +485,7 @@ export default function ContractorMap({
       if (clusterHits.length > 0) {
         const hit = clusterHits[0];
         const clId = hit.properties?.cluster_id;
-        const src = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
+        const src = map.getSource(SOURCE_PRECISE) as mapboxgl.GeoJSONSource;
         const coords = (hit.geometry as GeoJSON.Point).coordinates as [number, number];
         if (clId != null && typeof src.getClusterExpansionZoom === "function") {
           src.getClusterExpansionZoom(Number(clId), (err, zoom) => {
@@ -396,7 +500,9 @@ export default function ContractorMap({
         return;
       }
 
-      const pinHits = map.queryRenderedFeatures(e.point, { layers: [LAYER_UNCLUSTERED_MAIN] });
+      const pinHits = map.queryRenderedFeatures(e.point, {
+        layers: [...PIN_HOVER_LAYERS],
+      });
       if (pinHits.length > 0) {
         const id = String(pinHits[0].id ?? pinHits[0].properties?.license_number);
         onMarkerSelectRef.current(id);
@@ -421,9 +527,9 @@ export default function ContractorMap({
         }
         if (cancelled || !mapRef.current) return;
 
-        map.addSource(SOURCE_ID, {
+        map.addSource(SOURCE_PRECISE, {
           type: "geojson",
-          data: listingsToGeoJSON(listingsRef.current, searchTradeRef.current),
+          data: listingsToPreciseGeoJSON(listingsRef.current, searchTradeRef.current),
           cluster: true,
           clusterRadius: 50,
           /**
@@ -442,7 +548,7 @@ export default function ContractorMap({
         map.addLayer({
           id: LAYER_CLUSTER,
           type: "circle",
-          source: SOURCE_ID,
+          source: SOURCE_PRECISE,
           filter: ["has", "point_count"],
           paint: {
             "circle-color": buildClusterColorExpr(),
@@ -464,7 +570,7 @@ export default function ContractorMap({
         map.addLayer({
           id: LAYER_CLUSTER_COUNT,
           type: "symbol",
-          source: SOURCE_ID,
+          source: SOURCE_PRECISE,
           filter: ["has", "point_count"],
           layout: {
             "text-field": ["get", "point_count_abbreviated"],
@@ -479,7 +585,7 @@ export default function ContractorMap({
         map.addLayer({
           id: LAYER_UNCLUSTERED_SHADOW,
           type: "circle",
-          source: SOURCE_ID,
+          source: SOURCE_PRECISE,
           filter: unclusteredFilter,
           paint: {
             "circle-radius": shadowRadiusExpr,
@@ -493,7 +599,7 @@ export default function ContractorMap({
         map.addLayer({
           id: LAYER_UNCLUSTERED_MAIN,
           type: "circle",
-          source: SOURCE_ID,
+          source: SOURCE_PRECISE,
           filter: unclusteredFilter,
           paint: {
             "circle-radius": radiusExpr,
@@ -508,7 +614,7 @@ export default function ContractorMap({
         map.addLayer({
           id: LAYER_UNCLUSTERED_ICON,
           type: "symbol",
-          source: SOURCE_ID,
+          source: SOURCE_PRECISE,
           filter: unclusteredFilter,
           layout: {
             "icon-image": ["get", "icon_id"],
@@ -523,7 +629,7 @@ export default function ContractorMap({
         map.addLayer({
           id: LAYER_UNCLUSTERED_ISSUE,
           type: "circle",
-          source: SOURCE_ID,
+          source: SOURCE_PRECISE,
           filter: ["all", unclusteredFilter, ["==", ["get", "has_issue"], 1]],
           paint: {
             "circle-radius": 2.5,
@@ -532,6 +638,74 @@ export default function ContractorMap({
             "circle-stroke-color": "#ffffff",
             "circle-translate": [5.5, 4],
             "circle-opacity": 0.92,
+          },
+        });
+
+        map.addSource(SOURCE_APPROX, {
+          type: "geojson",
+          data: listingsToApproxGeoJSON(listingsRef.current, searchTradeRef.current),
+          cluster: false,
+        });
+
+        map.addLayer({
+          id: LAYER_APPROX_SHADOW,
+          type: "circle",
+          source: SOURCE_APPROX,
+          paint: {
+            "circle-radius": approxShadowRadiusExpr,
+            "circle-color": approxShadowOpacityExpr,
+            "circle-translate": [0, 1.25],
+            "circle-opacity": 0.75,
+          },
+        });
+
+        map.addLayer({
+          id: LAYER_APPROX_MAIN,
+          type: "circle",
+          source: SOURCE_APPROX,
+          paint: {
+            "circle-radius": approxRadiusExpr,
+            "circle-color": "#ffffff",
+            "circle-stroke-width": approxStrokeWidthExpr,
+            "circle-stroke-color": strokeColorExpr,
+            "circle-opacity": approxMainOpacityExpr,
+          },
+        });
+
+        map.addLayer({
+          id: LAYER_APPROX_ICON,
+          type: "symbol",
+          source: SOURCE_APPROX,
+          layout: {
+            "icon-image": ["get", "icon_id"],
+            "icon-size": 0.42,
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+          },
+          paint: {
+            "icon-opacity": [
+              "case",
+              ["boolean", ["feature-state", "selected"], false],
+              0.88,
+              hoverOrList,
+              0.78,
+              0.58,
+            ] as mapboxgl.ExpressionSpecification,
+          },
+        });
+
+        map.addLayer({
+          id: LAYER_APPROX_ISSUE,
+          type: "circle",
+          source: SOURCE_APPROX,
+          filter: ["==", ["get", "has_issue"], 1],
+          paint: {
+            "circle-radius": 2.25,
+            "circle-color": "#f59e0b",
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#ffffff",
+            "circle-translate": [5, 3.5],
+            "circle-opacity": 0.85,
           },
         });
 
@@ -554,6 +728,7 @@ export default function ContractorMap({
       map.remove();
       mapRef.current = null;
       hoverPinIdRef.current = null;
+      hoverPinSourceRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -561,40 +736,62 @@ export default function ContractorMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.isStyleLoaded()) return;
-    const src = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
-    if (!src) return;
-    src.setData(listingsToGeoJSON(listings, searchTrade));
+    const srcP = map.getSource(SOURCE_PRECISE) as mapboxgl.GeoJSONSource | undefined;
+    const srcA = map.getSource(SOURCE_APPROX) as mapboxgl.GeoJSONSource | undefined;
+    if (!srcP || !srcA) return;
+    srcP.setData(listingsToPreciseGeoJSON(listings, searchTrade));
+    srcA.setData(listingsToApproxGeoJSON(listings, searchTrade));
   }, [listings, searchTrade]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.isStyleLoaded()) return;
-    if (!map.getSource(SOURCE_ID)) return;
+    if (!map.getSource(SOURCE_PRECISE)) return;
 
     const prev = prevSelectedForStateRef.current;
-    if (prev && prev !== selectedId) {
-      map.removeFeatureState({ source: SOURCE_ID, id: prev }, "selected");
+    const prevSrc = prevSelectedSourceRef.current;
+    if (prev && prevSrc && prev !== selectedId) {
+      map.removeFeatureState({ source: prevSrc, id: prev }, "selected");
     }
     if (selectedId) {
-      map.setFeatureState({ source: SOURCE_ID, id: selectedId }, { selected: true });
+      const row = listings.find((l) => l.license_number === selectedId);
+      const src = pinSourceForRow(row);
+      if (src) {
+        map.setFeatureState({ source: src, id: selectedId }, { selected: true });
+        prevSelectedSourceRef.current = src;
+      } else {
+        prevSelectedSourceRef.current = null;
+      }
+    } else {
+      prevSelectedSourceRef.current = null;
     }
     prevSelectedForStateRef.current = selectedId;
-  }, [selectedId]);
+  }, [selectedId, listings]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.isStyleLoaded()) return;
-    if (!map.getSource(SOURCE_ID)) return;
+    if (!map.getSource(SOURCE_PRECISE)) return;
 
     const prev = prevHighlightForStateRef.current;
-    if (prev && prev !== highlightedId) {
-      map.removeFeatureState({ source: SOURCE_ID, id: prev }, "listHover");
+    const prevSrc = prevHighlightSourceRef.current;
+    if (prev && prevSrc && prev !== highlightedId) {
+      map.removeFeatureState({ source: prevSrc, id: prev }, "listHover");
     }
     if (highlightedId) {
-      map.setFeatureState({ source: SOURCE_ID, id: highlightedId }, { listHover: true });
+      const row = listings.find((l) => l.license_number === highlightedId);
+      const src = pinSourceForRow(row);
+      if (src) {
+        map.setFeatureState({ source: src, id: highlightedId }, { listHover: true });
+        prevHighlightSourceRef.current = src;
+      } else {
+        prevHighlightSourceRef.current = null;
+      }
+    } else {
+      prevHighlightSourceRef.current = null;
     }
     prevHighlightForStateRef.current = highlightedId;
-  }, [highlightedId]);
+  }, [highlightedId, listings]);
 
   useEffect(() => {
     const map = mapRef.current;

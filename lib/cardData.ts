@@ -10,6 +10,8 @@
  * Visual colors are resolved DOWNSTREAM via `getTradeStyle()` in
  * `lib/trade-colors.ts`, keyed by `primaryTradeLabel` or individual
  * `serviceTags` entries. This file stays color-agnostic.
+ *
+ * Trust badges use `lib/trustSignals.ts` — see `trustBadge` + `ownershipChip`.
  */
 
 import type { Contractor } from "@/types/contractor";
@@ -17,34 +19,15 @@ import type { ContractorListing } from "@/lib/listings";
 import type { MockContractor } from "@/lib/mockContractors";
 import { mockContractorToContractor } from "@/lib/mockContractors";
 import {
+  getOwnershipChipForSearchCard,
+  type TrustBadgeContractor,
+} from "@/lib/trustSignals";
+import {
+  CLASS_TO_TRADE,
   TRADE_TAXONOMY,
   tradeFromClass,
   type TradeSlug,
 } from "@/lib/trades";
-
-export interface TrustFlags {
-  active?: boolean;
-  workersComp?: boolean;
-  bonded?: boolean;
-  /** Renders a warning pill; truthy iff the contractor has disciplinary history. */
-  discipline?: boolean;
-  /** Renders a danger pill. */
-  pendingSuspension?: boolean;
-}
-
-/**
- * Whether to show the map’s secondary trust-issue dot (inactive, missing
- * WC/bond, discipline, or pending suspension) — aligned with warning
- * treatment on {@link TrustBadgeRow}.
- */
-export function contractorTrustIssueDot(trust: TrustFlags): boolean {
-  if (trust.active === false) return true;
-  if (trust.discipline) return true;
-  if (trust.pendingSuspension) return true;
-  if (trust.workersComp === false) return true;
-  if (trust.bonded === false) return true;
-  return false;
-}
 
 export interface ContractorCardData {
   licenseNumber: string;
@@ -53,11 +36,12 @@ export interface ContractorCardData {
    *  contractor". Used for both the subtitle and trade-color lookup. */
   primaryTradeLabel: string;
   city: string | null;
-  trust: TrustFlags;
-  /** All license classifications (prettified — "C-36 Plumbing" not
-   *  "C-36 Plumbing Contractor"). Drives both the tag row on the
-   *  detailed variant AND the classification-dot overflow indicator
-   *  when a contractor holds ≥4 trades. */
+  /** Pass-through for {@link TrustBadgeRow} (CSLB-aligned trust logic). */
+  trustBadge: TrustBadgeContractor;
+  /** Search cards only: muted chip under subtitle for sole proprietors. */
+  ownershipChip: string | null;
+  /** Short trade labels aligned with search/filters (e.g. "Plumbing"),
+   *  derived from CSLB codes in `classification_labels`. */
   serviceTags: string[];
   /** Raw count before truncation — preserved separately so the card
    *  can decide whether to render the dot overflow row without having
@@ -70,6 +54,35 @@ export interface ContractorCardData {
 /** Strip the trailing "Contractor" from a CSLB classification label. */
 function prettyTag(label: string): string {
   return label.replace(/\s+Contractor\s*$/i, "").trim() || label;
+}
+
+/**
+ * Card chip text: same short names as subtitles / chips ("Plumbing"),
+ * not "C-36 Plumbing". Uses leading CSLB code when it maps in
+ * {@link CLASS_TO_TRADE}; otherwise falls back to {@link prettyTag}.
+ */
+function displayTagForClassification(label: string): string {
+  const cleaned = prettyTag(label);
+  const m = cleaned.trim().match(/^([A-Z]-?\d+|B)\b/i);
+  if (m) {
+    const code = m[1].toUpperCase();
+    if (code in CLASS_TO_TRADE) {
+      const slug = CLASS_TO_TRADE[code];
+      return TRADE_TAXONOMY[slug].label;
+    }
+  }
+  return cleaned;
+}
+
+function dedupePreserveOrder(tags: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of tags) {
+    if (seen.has(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
 }
 
 /**
@@ -128,6 +141,33 @@ function pickPrimaryTrade(
   return firstNonGeneral ?? slugs[0];
 }
 
+function buildTrustBadge(
+  c: Pick<
+    Contractor,
+    | "is_active"
+    | "primary_status"
+    | "suspension_reason"
+    | "business_type"
+    | "has_workers_comp"
+    | "workers_comp_coverage_type"
+    | "has_contractor_bond"
+    | "has_pending_suspension"
+    | "has_disciplinary_history"
+  >
+): TrustBadgeContractor {
+  return {
+    is_active: !!c.is_active,
+    primary_status: c.primary_status ?? null,
+    suspension_reason: c.suspension_reason ?? null,
+    business_type: c.business_type ?? null,
+    has_workers_comp: !!c.has_workers_comp,
+    workers_comp_coverage_type: c.workers_comp_coverage_type ?? null,
+    has_contractor_bond: !!c.has_contractor_bond,
+    has_pending_suspension: !!c.has_pending_suspension,
+    has_disciplinary_history: !!c.has_disciplinary_history,
+  };
+}
+
 function adaptCommon(
   c: Pick<
     Contractor,
@@ -137,7 +177,11 @@ function adaptCommon(
     | "phone"
     | "years_in_business"
     | "is_active"
+    | "primary_status"
+    | "suspension_reason"
+    | "business_type"
     | "has_workers_comp"
+    | "workers_comp_coverage_type"
     | "has_contractor_bond"
     | "has_disciplinary_history"
     | "has_pending_suspension"
@@ -159,20 +203,17 @@ function adaptCommon(
     (primary ? TRADE_TAXONOMY[primary].label : null) ??
     "Multi-trade contractor";
 
-  const serviceTags = (c.classification_labels ?? []).map(prettyTag);
+  const serviceTags = dedupePreserveOrder(
+    (c.classification_labels ?? []).map(displayTagForClassification)
+  );
 
   return {
     licenseNumber: c.license_number,
     businessName: c.business_name,
     primaryTradeLabel: primaryLabel,
     city: c.city ?? null,
-    trust: {
-      active: !!c.is_active,
-      workersComp: !!c.has_workers_comp,
-      bonded: !!c.has_contractor_bond,
-      discipline: !!c.has_disciplinary_history,
-      pendingSuspension: !!c.has_pending_suspension,
-    },
+    trustBadge: buildTrustBadge(c),
+    ownershipChip: getOwnershipChipForSearchCard(c),
     serviceTags,
     classificationCount:
       c.classification_count ?? (c.classification_labels?.length ?? 0),

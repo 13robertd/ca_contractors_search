@@ -20,14 +20,14 @@ import type { ContractorCardData } from "@/lib/cardData";
  *     20px, tinted via `trade.text`). Paired with the border so the
  *     two visual anchors read as one signal.
  *
- *   • CLASSIFICATION DOTS only appear when `classificationCount ≥ 4`.
- *     Max 4 visible + "+N" overflow. Each dot uses its own trade's
- *     color; primary-trade duplicates are filtered out. For 1-3
- *     classifications the card stays clean (no dots).
+ *   • CLASSIFICATION DOTS (under the trade icon) appear when the card
+ *     shows two or more service tags — each dot is a non-primary trade
+ *     color (max 4 + "+N"). Single-trade cards stay clean (no column).
  *
- * Trust: on the `detailed` variant, the full <TrustBadgeRow> renders
- * (green ✓ for Active / WC / Bonded when true; amber ⚠ for missing
- * WC/bond; discipline / suspension called out). Matches /search.
+ * Trust: on the `detailed` variant, <TrustBadgeRow> uses `lib/trustSignals`
+ * (license from `primary_status`, WC with sole-proprietor exempt handling,
+ * bond, discipline / pending suspension). Optional `ownershipChip` for
+ * sole ownership. Matches /search.
  *
  * Density:
  *
@@ -68,9 +68,9 @@ export default function ContractorCardBase({
   const trade = getTradeStyle(data.primaryTradeLabel);
   const TradeIcon = trade.icon;
 
-  // Dots only appear when the contractor holds ≥4 classifications — the
-  // threshold keeps specialists & 2-3 trade cards visually calm.
-  const showDots = data.classificationCount >= 4;
+  // Vertical dots: any multi-trade card (≥2 tags). The old ≥4 threshold
+  // hid secondary trade colors for typical 2–3 classification contractors.
+  const showDots = data.serviceTags.length >= 2;
 
   // Outer shell: flex row so the trade accent is a real column with
   // rounded left corners (not a border-l square). Padding lives only on
@@ -137,15 +137,17 @@ export default function ContractorCardBase({
 
               <div className="min-w-0 flex-1 flex flex-col gap-3.5 min-h-0">
                 <Header data={data} />
-                <TrustBadgeRow
-                  contractor={{
-                    is_active: data.trust.active ?? false,
-                    has_workers_comp: data.trust.workersComp ?? false,
-                    has_contractor_bond: data.trust.bonded ?? false,
-                    has_pending_suspension: data.trust.pendingSuspension ?? false,
-                    has_disciplinary_history: data.trust.discipline ?? false,
-                  }}
-                />
+                {data.ownershipChip ? (
+                  <p className="text-[11px] font-medium leading-none">
+                    <span
+                      className="inline-flex items-center rounded-md border border-gray-200/90 bg-gray-50 px-2 py-1 text-ink-secondary"
+                      title="Sole ownership — typically owner-operated"
+                    >
+                      {data.ownershipChip}
+                    </span>
+                  </p>
+                ) : null}
+                <TrustBadgeRow contractor={data.trustBadge} />
                 {data.serviceTags.length > 0 ? (
                   <ServiceTagsRow tags={data.serviceTags} />
                 ) : null}
@@ -178,15 +180,17 @@ export default function ContractorCardBase({
 
               {variant === "detailed" ? (
                 <>
-                  <TrustBadgeRow
-                    contractor={{
-                      is_active: data.trust.active ?? false,
-                      has_workers_comp: data.trust.workersComp ?? false,
-                      has_contractor_bond: data.trust.bonded ?? false,
-                      has_pending_suspension: data.trust.pendingSuspension ?? false,
-                      has_disciplinary_history: data.trust.discipline ?? false,
-                    }}
-                  />
+                  {data.ownershipChip ? (
+                    <p className="text-[11px] font-medium leading-none">
+                      <span
+                        className="inline-flex items-center rounded-md border border-gray-200/90 bg-gray-50 px-2 py-1 text-ink-secondary"
+                        title="Sole ownership — typically owner-operated"
+                      >
+                        {data.ownershipChip}
+                      </span>
+                    </p>
+                  ) : null}
+                  <TrustBadgeRow contractor={data.trustBadge} />
                   {data.serviceTags.length > 0 ? (
                     <ServiceTagsRow tags={data.serviceTags} />
                   ) : null}
@@ -292,11 +296,18 @@ function ServiceTagsRow({ tags }: { tags: string[] }) {
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {shown.map((t) => (
-        <span key={t} className="tag" title={t}>
-          {t}
-        </span>
-      ))}
+      {shown.map((t) => {
+        const chipDot = getTradeStyle(t).dot;
+        return (
+          <span key={t} className="tag gap-1.5" title={t}>
+            <span
+              className={`shrink-0 w-1.5 h-1.5 rounded-full ${chipDot}`}
+              aria-hidden
+            />
+            {t}
+          </span>
+        );
+      })}
       {extra > 0 ? <span className="tag">+{extra} more</span> : null}
     </div>
   );

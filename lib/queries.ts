@@ -35,6 +35,10 @@ export interface SearchParams {
   activeOnly?: boolean;
   /** Minimum years in business. Ignored unless a positive integer. */
   minYears?: number;
+  /**
+   * Optional max rows. Omit for no app-side cap — PostgREST uses your
+   * project's API max rows (Dashboard → Settings → API → `max rows`).
+   */
   limit?: number;
 }
 
@@ -62,14 +66,21 @@ export async function searchContractors(
     primaryTrade,
     activeOnly = true,
     minYears,
-    limit = 60,
+    limit: limitParam,
   } = params;
 
   let query = supabase
     .from("contractors")
     .select(CONTRACTOR_CARD_COLUMNS)
-    .order("years_in_business", { ascending: false, nullsFirst: false })
-    .limit(limit);
+    .order("years_in_business", { ascending: false, nullsFirst: false });
+
+  if (
+    typeof limitParam === "number" &&
+    Number.isFinite(limitParam) &&
+    limitParam > 0
+  ) {
+    query = query.limit(limitParam);
+  }
 
   if (activeOnly) query = query.eq("is_active", true);
   if (county) query = query.eq("county", county);

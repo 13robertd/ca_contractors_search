@@ -1,30 +1,27 @@
-import type { Contractor } from "@/types/contractor";
+import {
+  getBondBadge,
+  getLicenseTrustBadge,
+  getWorkersCompBadge,
+  type TrustBadgeContractor,
+  type TrustTone,
+} from "@/lib/trustSignals";
 
-type Subset = Pick<
-  Contractor,
-  | "is_active"
-  | "has_workers_comp"
-  | "has_contractor_bond"
-  | "has_pending_suspension"
-  | "has_disciplinary_history"
->;
+export type { TrustBadgeContractor };
 
-type Tone = "positive" | "neutral" | "warning" | "danger";
-
-interface BadgeProps {
-  label: string;
-  tone: Tone;
-  title?: string;
-  /** When set, overrides the default glyph for this tone. */
-  glyph?: string;
-}
-
-const TONE_CLS: Record<Tone, string> = {
+const TONE_CLS: Record<TrustTone, string> = {
   positive: "badge-positive",
   neutral: "badge-neutral",
   warning: "badge-warning",
   danger: "badge-danger",
 };
+
+interface BadgeProps {
+  label: string;
+  tone: TrustTone;
+  title?: string;
+  /** When set, overrides the default glyph for this tone. */
+  glyph?: string;
+}
 
 function Badge({ label, tone, title, glyph }: BadgeProps) {
   const defaultGlyph =
@@ -45,50 +42,29 @@ function Badge({ label, tone, title, glyph }: BadgeProps) {
 }
 
 /**
- * Full trust strip for listing cards: green checks for good standing on
- * Active / Workers' Comp / Bonded, amber warnings when coverage is
- * missing, discipline called out, pending suspension as danger.
+ * Full trust strip: license status from `primary_status`, workers' comp with
+ * sole-proprietor exempt handling, bond, discipline, pending suspension.
  */
-export default function TrustBadgeRow({ contractor }: { contractor: Subset }) {
+export default function TrustBadgeRow({
+  contractor,
+}: {
+  contractor: TrustBadgeContractor;
+}) {
+  const license = getLicenseTrustBadge(contractor);
+  const wc = getWorkersCompBadge(contractor);
+  const bond = getBondBadge(contractor);
+
   return (
     <div className="flex flex-wrap gap-1.5">
-      {contractor.is_active ? (
-        <Badge label="Active" tone="positive" title="Currently active license" />
-      ) : (
-        <Badge
-          label="License inactive"
-          tone="danger"
-          title="License is not active"
-        />
-      )}
+      <Badge
+        label={license.label}
+        tone={license.tone}
+        title={license.title}
+      />
 
-      {contractor.has_workers_comp ? (
-        <Badge
-          label="Workers' Comp"
-          tone="positive"
-          title="Workers' compensation insurance on file"
-        />
-      ) : (
-        <Badge
-          label="No workers' comp"
-          tone="warning"
-          title="No workers' compensation on file"
-        />
-      )}
+      <Badge label={wc.label} tone={wc.tone} title={wc.title} />
 
-      {contractor.has_contractor_bond ? (
-        <Badge
-          label="Bonded"
-          tone="positive"
-          title="Contractor bond on file"
-        />
-      ) : (
-        <Badge
-          label="No bond on file"
-          tone="warning"
-          title="No contractor bond on file"
-        />
-      )}
+      <Badge label={bond.label} tone={bond.tone} title={bond.title} />
 
       {contractor.has_disciplinary_history ? (
         <Badge
